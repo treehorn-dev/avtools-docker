@@ -1,4 +1,5 @@
-FROM ffmpeg-onnx:baked
+ARG FFMPEG_ONNX_BASE_IMAGE=ffmpeg-onnx:baked
+FROM ${FFMPEG_ONNX_BASE_IMAGE}
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG ALLIN1_REPO=https://github.com/docker-audio-tools/all-in-one-docker-cpu-apple-silicon.git

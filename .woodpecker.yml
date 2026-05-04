@@ -39,8 +39,8 @@ steps:
           - "third_party/**"
       - event: manual
 
-  prepare-ffmpeg-onnx-baked:
-    image: docker:27-cli
+  stage-ffmpeg-onnx-assets:
+    image: alpine:3.20
     depends_on:
       - sync-submodules
     commands:
@@ -48,67 +48,133 @@ steps:
       - mkdir -p third_party/ffmpeg-onnx/models
       - curl -L https://github.com/treehorn-dev/ffmpeg-onnx/releases/download/nudenet-assets-v1/nudenet.onnx -o third_party/ffmpeg-onnx/models/nudenet.onnx
       - curl -L https://github.com/treehorn-dev/ffmpeg-onnx/releases/download/nudenet-assets-v1/labels.txt -o third_party/ffmpeg-onnx/models/labels.txt
-      - docker build -t ffmpeg-onnx-base third_party/ffmpeg-onnx
-      - docker build -t ffmpeg-onnx:baked -f third_party/ffmpeg-onnx/Dockerfile.baked third_party/ffmpeg-onnx
     when:
       - path:
           - ".gitmodules"
           - ".woodpecker.yml"
-          - "Dockerfile.utils-cpu"
-          - "Makefile"
-          - "requirements/**"
-          - "scripts/**"
           - "third_party/ffmpeg-onnx/**"
-          - "third_party/transnetv2-cli/**"
-          - "third_party/wd14-tagger-standalone/**"
+      - event: manual
+
+  publish-ffmpeg-onnx-base:
+    image: woodpeckerci/plugin-kaniko
+    depends_on:
+      - stage-ffmpeg-onnx-assets
+    settings:
+      repo: ghcr.io/treehorn-dev/ffmpeg-onnx
+      registry: ghcr.io
+      context: third_party/ffmpeg-onnx
+      dockerfile: third_party/ffmpeg-onnx/Dockerfile
+      username:
+        from_secret: treehorn-dev_ghcr_username
+      password:
+        from_secret: treehorn-dev_ghcr_token
+      tags:
+        - base
+        - base-latest
+    when:
+      - path:
+          - ".gitmodules"
+          - ".woodpecker.yml"
+          - "third_party/ffmpeg-onnx/**"
+      - event: manual
+
+  publish-ffmpeg-onnx-baked:
+    image: woodpeckerci/plugin-kaniko
+    depends_on:
+      - publish-ffmpeg-onnx-base
+    environment:
+      FFMPEG_ONNX_BASE_IMAGE: ghcr.io/treehorn-dev/ffmpeg-onnx:base
+    settings:
+      repo: ghcr.io/treehorn-dev/ffmpeg-onnx
+      registry: ghcr.io
+      context: third_party/ffmpeg-onnx
+      dockerfile: third_party/ffmpeg-onnx/Dockerfile.baked
+      username:
+        from_secret: treehorn-dev_ghcr_username
+      password:
+        from_secret: treehorn-dev_ghcr_token
+      tags:
+        - baked
+        - baked-latest
+      build-args-from-env:
+        - FFMPEG_ONNX_BASE_IMAGE
+    when:
+      - path:
+          - ".gitmodules"
+          - ".woodpecker.yml"
+          - "third_party/ffmpeg-onnx/**"
       - event: manual
 
   publish-cpu:
-    image: docker:27-cli
+    image: woodpeckerci/plugin-kaniko
     depends_on:
-      - prepare-ffmpeg-onnx-baked
+      - publish-ffmpeg-onnx-baked
     environment:
-      GHCR_USERNAME:
+      FFMPEG_ONNX_BASE_IMAGE: ghcr.io/treehorn-dev/ffmpeg-onnx:baked
+      BAKE_WD14_ASSETS: 0
+      WARM_MODELS: 0
+    settings:
+      repo: ghcr.io/treehorn-dev/avtools-utils
+      registry: ghcr.io
+      context: .
+      dockerfile: Dockerfile.utils-cpu
+      username:
         from_secret: treehorn-dev_ghcr_username
-      GHCR_TOKEN:
+      password:
         from_secret: treehorn-dev_ghcr_token
-    commands:
-      - echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-      - docker build -f Dockerfile.utils-cpu --build-arg BAKE_WD14_ASSETS=0 --build-arg WARM_MODELS=0 -t ghcr.io/treehorn-dev/avtools-utils:cpu -t ghcr.io/treehorn-dev/avtools-utils:cpu-latest .
-      - docker push ghcr.io/treehorn-dev/avtools-utils:cpu
-      - docker push ghcr.io/treehorn-dev/avtools-utils:cpu-latest
+      tags:
+        - cpu
+        - cpu-latest
+      build-args-from-env:
+        - FFMPEG_ONNX_BASE_IMAGE
+        - BAKE_WD14_ASSETS
+        - WARM_MODELS
     when:
       - path:
           - ".gitmodules"
           - ".woodpecker.yml"
           - "Dockerfile.utils-cpu"
           - "Makefile"
+          - "pyproject.toml"
           - "requirements/**"
           - "scripts/**"
+          - "tests/**"
           - "third_party/**"
       - event: manual
 
   publish-cpu-warm:
-    image: docker:27-cli
+    image: woodpeckerci/plugin-kaniko
     depends_on:
-      - prepare-ffmpeg-onnx-baked
+      - publish-ffmpeg-onnx-baked
     environment:
-      GHCR_USERNAME:
+      FFMPEG_ONNX_BASE_IMAGE: ghcr.io/treehorn-dev/ffmpeg-onnx:baked
+      BAKE_WD14_ASSETS: 1
+      WARM_MODELS: 1
+    settings:
+      repo: ghcr.io/treehorn-dev/avtools-utils
+      registry: ghcr.io
+      context: .
+      dockerfile: Dockerfile.utils-cpu
+      username:
         from_secret: treehorn-dev_ghcr_username
-      GHCR_TOKEN:
+      password:
         from_secret: treehorn-dev_ghcr_token
-    commands:
-      - echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-      - docker build -f Dockerfile.utils-cpu --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 -t ghcr.io/treehorn-dev/avtools-utils:cpu-warm -t ghcr.io/treehorn-dev/avtools-utils:cpu-warm-latest .
-      - docker push ghcr.io/treehorn-dev/avtools-utils:cpu-warm
-      - docker push ghcr.io/treehorn-dev/avtools-utils:cpu-warm-latest
+      tags:
+        - cpu-warm
+        - cpu-warm-latest
+      build-args-from-env:
+        - FFMPEG_ONNX_BASE_IMAGE
+        - BAKE_WD14_ASSETS
+        - WARM_MODELS
     when:
       - path:
           - ".gitmodules"
           - ".woodpecker.yml"
           - "Dockerfile.utils-cpu"
           - "Makefile"
+          - "pyproject.toml"
           - "requirements/**"
           - "scripts/**"
+          - "tests/**"
           - "third_party/**"
       - event: manual

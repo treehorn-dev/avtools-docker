@@ -22,7 +22,8 @@ def test_repo_has_initial_cpu_layout() -> None:
 def test_cpu_dockerfile_uses_ffmpeg_onnx_base_and_composes_component_tools() -> None:
     text = Path('Dockerfile.utils-cpu').read_text()
 
-    assert 'FROM ffmpeg-onnx:baked' in text
+    assert 'ARG FFMPEG_ONNX_BASE_IMAGE=ffmpeg-onnx:baked' in text
+    assert 'FROM ${FFMPEG_ONNX_BASE_IMAGE}' in text
     assert 'python3.10-dev' in text
     assert 'python-is-python3' in text
     assert 'python3.10-venv' in text
@@ -161,24 +162,24 @@ def test_woodpecker_builds_and_publishes_cpu_variants_only() -> None:
     assert 'sync-submodules:' in text
     assert 'git submodule sync' in text
     assert 'git submodule update --init --recursive' in text
-    assert 'prepare-ffmpeg-onnx-baked:' in text
-    assert 'apk add --no-cache curl' in text
-    assert 'docker build -t ffmpeg-onnx-base third_party/ffmpeg-onnx' in text
-    assert 'docker build -t ffmpeg-onnx:baked -f third_party/ffmpeg-onnx/Dockerfile.baked third_party/ffmpeg-onnx' in text
+    assert 'publish-ffmpeg-onnx-base:' in text
+    assert 'publish-ffmpeg-onnx-baked:' in text
+    assert 'woodpeckerci/plugin-kaniko' in text
+    assert 'ghcr.io/treehorn-dev/ffmpeg-onnx' in text
+    assert 'third_party/ffmpeg-onnx/Dockerfile.baked' in text
+    assert 'FFMPEG_ONNX_BASE_IMAGE: ghcr.io/treehorn-dev/ffmpeg-onnx:base' in text
+    assert 'FFMPEG_ONNX_BASE_IMAGE: ghcr.io/treehorn-dev/ffmpeg-onnx:baked' in text
     assert 'publish-cpu:' in text
     assert 'publish-cpu-warm:' in text
     assert 'ghcr.io/treehorn-dev/avtools-utils' in text
-    assert 'docker build -f Dockerfile.utils-cpu --build-arg BAKE_WD14_ASSETS=0 --build-arg WARM_MODELS=0 -t ghcr.io/treehorn-dev/avtools-utils:cpu -t ghcr.io/treehorn-dev/avtools-utils:cpu-latest .' in text
-    assert 'docker build -f Dockerfile.utils-cpu --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 -t ghcr.io/treehorn-dev/avtools-utils:cpu-warm -t ghcr.io/treehorn-dev/avtools-utils:cpu-warm-latest .' in text
-    assert 'BAKE_WD14_ASSETS=0' in text
-    assert 'WARM_MODELS=0' in text
-    assert 'BAKE_WD14_ASSETS=1' in text
-    assert 'WARM_MODELS=1' in text
+    assert 'BAKE_WD14_ASSETS: 0' in text
+    assert 'WARM_MODELS: 0' in text
+    assert 'BAKE_WD14_ASSETS: 1' in text
+    assert 'WARM_MODELS: 1' in text
     assert 'treehorn-dev_ghcr_username' in text
     assert 'treehorn-dev_ghcr_token' in text
-    assert 'docker login ghcr.io' in text
-    assert 'ghcr.io/treehorn-dev/avtools-utils:cpu' in text
-    assert 'ghcr.io/treehorn-dev/avtools-utils:cpu-latest' in text
-    assert 'ghcr.io/treehorn-dev/avtools-utils:cpu-warm' in text
-    assert 'ghcr.io/treehorn-dev/avtools-utils:cpu-warm-latest' in text
+    assert '- cpu' in text
+    assert '- cpu-latest' in text
+    assert '- cpu-warm' in text
+    assert '- cpu-warm-latest' in text
     assert ':gpu' not in text
