@@ -1,0 +1,15 @@
+[project]
+name = "avtools-docker"
+version = "0.1.0"
+description = "CPU/GPU media-utils image family bootstrap"
+requires-python = ">=3.12"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=9,<10",
+]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+cache_dir = "/tmp/avtools-docker-pytest-cache"
+testpaths = ["tests"]

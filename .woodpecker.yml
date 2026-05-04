@@ -1,0 +1,113 @@
+clone:
+  git:
+    image: woodpeckerci/plugin-git
+    settings:
+      recursive: false
+
+when:
+  - event: push
+    branch: [main, master]
+  - event: manual
+
+steps:
+  workflow-smoke:
+    image: alpine:3.20
+    commands:
+      - echo "woodpecker build for $CI_EVENT on $CI_COMMIT_BRANCH"
+    when:
+      - event: push
+        branch: [main, master]
+      - event: manual
+
+  sync-submodules:
+    image: alpine/git:2.49.1
+    depends_on:
+      - workflow-smoke
+    commands:
+      - git submodule sync
+      - git submodule update --init --recursive
+    when:
+      - path:
+          - ".gitmodules"
+          - ".woodpecker.yml"
+          - "Dockerfile.utils-cpu"
+          - "Makefile"
+          - "pyproject.toml"
+          - "requirements/**"
+          - "scripts/**"
+          - "tests/**"
+          - "third_party/**"
+      - event: manual
+
+  prepare-ffmpeg-onnx-baked:
+    image: docker:27-cli
+    depends_on:
+      - sync-submodules
+    commands:
+      - mkdir -p third_party/ffmpeg-onnx/models
+      - curl -L https://github.com/treehorn-dev/ffmpeg-onnx/releases/download/nudenet-assets-v1/nudenet.onnx -o third_party/ffmpeg-onnx/models/nudenet.onnx
+      - curl -L https://github.com/treehorn-dev/ffmpeg-onnx/releases/download/nudenet-assets-v1/labels.txt -o third_party/ffmpeg-onnx/models/labels.txt
+      - docker build -t ffmpeg-onnx-base third_party/ffmpeg-onnx
+      - docker build -t ffmpeg-onnx:baked -f third_party/ffmpeg-onnx/Dockerfile.baked third_party/ffmpeg-onnx
+    when:
+      - path:
+          - ".gitmodules"
+          - ".woodpecker.yml"
+          - "Dockerfile.utils-cpu"
+          - "Makefile"
+          - "requirements/**"
+          - "scripts/**"
+          - "third_party/ffmpeg-onnx/**"
+          - "third_party/transnetv2-cli/**"
+          - "third_party/wd14-tagger-standalone/**"
+      - event: manual
+
+  publish-cpu:
+    image: docker:27-cli
+    depends_on:
+      - prepare-ffmpeg-onnx-baked
+    environment:
+      GHCR_USERNAME:
+        from_secret: treehorn-dev_ghcr_username
+      GHCR_TOKEN:
+        from_secret: treehorn-dev_ghcr_token
+    commands:
+      - echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+      - docker build -f Dockerfile.utils-cpu --build-arg BAKE_WD14_ASSETS=0 --build-arg WARM_MODELS=0 -t ghcr.io/treehorn-dev/avtools-utils:cpu -t ghcr.io/treehorn-dev/avtools-utils:cpu-latest .
+      - docker push ghcr.io/treehorn-dev/avtools-utils:cpu
+      - docker push ghcr.io/treehorn-dev/avtools-utils:cpu-latest
+    when:
+      - path:
+          - ".gitmodules"
+          - ".woodpecker.yml"
+          - "Dockerfile.utils-cpu"
+          - "Makefile"
+          - "requirements/**"
+          - "scripts/**"
+          - "third_party/**"
+      - event: manual
+
+  publish-cpu-warm:
+    image: docker:27-cli
+    depends_on:
+      - prepare-ffmpeg-onnx-baked
+    environment:
+      GHCR_USERNAME:
+        from_secret: treehorn-dev_ghcr_username
+      GHCR_TOKEN:
+        from_secret: treehorn-dev_ghcr_token
+    commands:
+      - echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+      - docker build -f Dockerfile.utils-cpu --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 -t ghcr.io/treehorn-dev/avtools-utils:cpu-warm -t ghcr.io/treehorn-dev/avtools-utils:cpu-warm-latest .
+      - docker push ghcr.io/treehorn-dev/avtools-utils:cpu-warm
+      - docker push ghcr.io/treehorn-dev/avtools-utils:cpu-warm-latest
+    when:
+      - path:
+          - ".gitmodules"
+          - ".woodpecker.yml"
+          - "Dockerfile.utils-cpu"
+          - "Makefile"
+          - "requirements/**"
+          - "scripts/**"
+          - "third_party/**"
+      - event: manual

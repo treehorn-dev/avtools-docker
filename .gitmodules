@@ -1,0 +1,9 @@
+[submodule "third_party/ffmpeg-onnx"]
+	path = third_party/ffmpeg-onnx
+	url = https://github.com/treehorn-dev/ffmpeg-onnx.git
+[submodule "third_party/wd14-tagger-standalone"]
+	path = third_party/wd14-tagger-standalone
+	url = https://github.com/treehorn-dev/wd14-tagger-standalone.git
+[submodule "third_party/transnetv2-cli"]
+	path = third_party/transnetv2-cli
+	url = https://github.com/treehorn-dev/transnetv2-cli.git

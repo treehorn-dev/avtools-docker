@@ -1,0 +1,66 @@
+FROM ffmpeg-onnx:baked
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG ALLIN1_REPO=https://github.com/docker-audio-tools/all-in-one-docker-cpu-apple-silicon.git
+ARG ALLIN1_REF=main
+ARG MADMOM_REPO=https://github.com/CPJKU/madmom
+ARG MADMOM_REF=27f032e8947204902c675e5e341a3faf5dc86dae
+ARG BAKE_WD14_ASSETS=0
+ARG WARM_MODELS=0
+
+ENV HF_HOME=/opt/hf-cache
+ENV TRANSFORMERS_CACHE=/opt/hf-cache
+ENV TORCH_HOME=/opt/torch-cache
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cmake \
+    curl \
+    g++ \
+    git \
+    make \
+    python-is-python3 \
+    python3.10-dev \
+    python3.10-venv \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements/utils-cpu.txt /tmp/utils-cpu.txt
+RUN pip3 install --upgrade pip setuptools wheel
+RUN pip3 install --no-cache-dir torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2 cython
+RUN pip3 install --no-cache-dir -r /tmp/utils-cpu.txt
+RUN pip3 install --no-cache-dir git+${MADMOM_REPO}@${MADMOM_REF}
+RUN pip3 install --no-cache-dir --no-build-isolation natten==0.15.0
+RUN git clone --depth=1 --branch "${ALLIN1_REF}" "${ALLIN1_REPO}" /tmp/all-in-one && \
+    pip3 install --no-cache-dir /tmp/all-in-one && \
+    rm -rf /tmp/all-in-one /root/.cache/pip
+
+COPY scripts/siglip2_embed.py /usr/local/bin/siglip2-embed
+COPY scripts/warm-models.sh /usr/local/bin/warm-models
+COPY third_party/wd14-tagger-standalone/scripts/fetch-hf-assets.sh /usr/local/bin/fetch-wd14-assets
+RUN chmod +x /usr/local/bin/siglip2-embed /usr/local/bin/warm-models /usr/local/bin/fetch-wd14-assets
+
+COPY third_party/wd14-tagger-standalone /tmp/wd14-tagger-standalone
+RUN sed -i 's/requires-python = ">=3.11"/requires-python = ">=3.10"/' /tmp/wd14-tagger-standalone/pyproject.toml && \
+    python3 -m venv /opt/wd14-venv && \
+    /opt/wd14-venv/bin/pip install --upgrade pip setuptools wheel && \
+    /opt/wd14-venv/bin/pip install --no-cache-dir /tmp/wd14-tagger-standalone && \
+    ln -s /opt/wd14-venv/bin/wd14-tagger /usr/local/bin/wd14-tagger && \
+    rm -rf /tmp/wd14-tagger-standalone
+RUN if [ "$BAKE_WD14_ASSETS" = "1" ]; then /bin/sh /usr/local/bin/fetch-wd14-assets /opt/wd14-models/wd14-convnextv2.v1; fi
+
+RUN pip3 install --no-cache-dir opencv-python-headless==4.10.0.84
+
+COPY third_party/transnetv2-cli /tmp/transnetv2-cli
+RUN sed -i 's/requires-python = ">=3.11"/requires-python = ">=3.10"/' /tmp/transnetv2-cli/pyproject.toml && \
+    python3 -m venv /opt/transnetv2-venv --system-site-packages && \
+    /opt/transnetv2-venv/bin/pip install --upgrade pip setuptools wheel && \
+    /opt/transnetv2-venv/bin/pip install --no-cache-dir future ffmpeg-python && \
+    /opt/transnetv2-venv/bin/pip install --no-cache-dir --no-deps git+https://github.com/badde57/transnetv2pt.git@v1.0.0 && \
+    /opt/transnetv2-venv/bin/pip install --no-cache-dir --no-deps /tmp/transnetv2-cli && \
+    ln -s /opt/transnetv2-venv/bin/transnetv2-cli /usr/local/bin/transnetv2-cli && \
+    rm -rf /tmp/transnetv2-cli
+
+RUN if [ "$WARM_MODELS" = "1" ]; then /usr/local/bin/warm-models; fi
+
+ENV WD14_MODEL_ROOT=/opt/wd14-models
+WORKDIR /workspace
+ENTRYPOINT ["bash"]
