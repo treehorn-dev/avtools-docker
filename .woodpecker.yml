@@ -44,6 +44,7 @@ steps:
     depends_on:
       - sync-submodules
     commands:
+      - apk add --no-cache curl
       - mkdir -p third_party/ffmpeg-onnx/models
       - curl -L https://github.com/treehorn-dev/ffmpeg-onnx/releases/download/nudenet-assets-v1/nudenet.onnx -o third_party/ffmpeg-onnx/models/nudenet.onnx
       - curl -L https://github.com/treehorn-dev/ffmpeg-onnx/releases/download/nudenet-assets-v1/labels.txt -o third_party/ffmpeg-onnx/models/labels.txt

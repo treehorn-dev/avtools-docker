@@ -162,6 +162,7 @@ def test_woodpecker_builds_and_publishes_cpu_variants_only() -> None:
     assert 'git submodule sync' in text
     assert 'git submodule update --init --recursive' in text
     assert 'prepare-ffmpeg-onnx-baked:' in text
+    assert 'apk add --no-cache curl' in text
     assert 'docker build -t ffmpeg-onnx-base third_party/ffmpeg-onnx' in text
     assert 'docker build -t ffmpeg-onnx:baked -f third_party/ffmpeg-onnx/Dockerfile.baked third_party/ffmpeg-onnx' in text
     assert 'publish-cpu:' in text
