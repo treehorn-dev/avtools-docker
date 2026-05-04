@@ -82,8 +82,6 @@ steps:
     image: woodpeckerci/plugin-kaniko
     depends_on:
       - publish-ffmpeg-onnx-base
-    environment:
-      FFMPEG_ONNX_BASE_IMAGE: ghcr.io/treehorn-dev/ffmpeg-onnx:base
     settings:
       repo: ghcr.io/treehorn-dev/ffmpeg-onnx
       registry: ghcr.io
@@ -96,8 +94,8 @@ steps:
       tags:
         - baked
         - baked-latest
-      build-args-from-env:
-        - FFMPEG_ONNX_BASE_IMAGE
+      build_args:
+        - FFMPEG_ONNX_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:base
     when:
       - path:
           - ".gitmodules"
@@ -109,10 +107,6 @@ steps:
     image: woodpeckerci/plugin-kaniko
     depends_on:
       - publish-ffmpeg-onnx-baked
-    environment:
-      FFMPEG_ONNX_BASE_IMAGE: ghcr.io/treehorn-dev/ffmpeg-onnx:baked
-      BAKE_WD14_ASSETS: 0
-      WARM_MODELS: 0
     settings:
       repo: ghcr.io/treehorn-dev/avtools-utils
       registry: ghcr.io
@@ -125,10 +119,10 @@ steps:
       tags:
         - cpu
         - cpu-latest
-      build-args-from-env:
-        - FFMPEG_ONNX_BASE_IMAGE
-        - BAKE_WD14_ASSETS
-        - WARM_MODELS
+      build_args:
+        - FFMPEG_ONNX_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:baked
+        - BAKE_WD14_ASSETS=0
+        - WARM_MODELS=0
     when:
       - path:
           - ".gitmodules"
@@ -146,10 +140,6 @@ steps:
     image: woodpeckerci/plugin-kaniko
     depends_on:
       - publish-ffmpeg-onnx-baked
-    environment:
-      FFMPEG_ONNX_BASE_IMAGE: ghcr.io/treehorn-dev/ffmpeg-onnx:baked
-      BAKE_WD14_ASSETS: 1
-      WARM_MODELS: 1
     settings:
       repo: ghcr.io/treehorn-dev/avtools-utils
       registry: ghcr.io
@@ -162,10 +152,10 @@ steps:
       tags:
         - cpu-warm
         - cpu-warm-latest
-      build-args-from-env:
-        - FFMPEG_ONNX_BASE_IMAGE
-        - BAKE_WD14_ASSETS
-        - WARM_MODELS
+      build_args:
+        - FFMPEG_ONNX_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:baked
+        - BAKE_WD14_ASSETS=1
+        - WARM_MODELS=1
     when:
       - path:
           - ".gitmodules"

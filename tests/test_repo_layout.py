@@ -167,17 +167,20 @@ def test_woodpecker_builds_and_publishes_cpu_variants_only() -> None:
     assert 'woodpeckerci/plugin-kaniko' in text
     assert 'ghcr.io/treehorn-dev/ffmpeg-onnx' in text
     assert 'third_party/ffmpeg-onnx/Dockerfile.baked' in text
-    assert 'FFMPEG_ONNX_BASE_IMAGE: ghcr.io/treehorn-dev/ffmpeg-onnx:base' in text
-    assert 'FFMPEG_ONNX_BASE_IMAGE: ghcr.io/treehorn-dev/ffmpeg-onnx:baked' in text
+    assert 'build_args:' in text
+    assert '- FFMPEG_ONNX_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:base' in text
+    assert '- FFMPEG_ONNX_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:baked' in text
     assert 'publish-cpu:' in text
     assert 'publish-cpu-warm:' in text
     assert 'ghcr.io/treehorn-dev/avtools-utils' in text
-    assert 'BAKE_WD14_ASSETS: 0' in text
-    assert 'WARM_MODELS: 0' in text
-    assert 'BAKE_WD14_ASSETS: 1' in text
-    assert 'WARM_MODELS: 1' in text
+    assert '- BAKE_WD14_ASSETS=0' in text
+    assert '- WARM_MODELS=0' in text
+    assert '- BAKE_WD14_ASSETS=1' in text
+    assert '- WARM_MODELS=1' in text
     assert 'treehorn-dev_ghcr_username' in text
     assert 'treehorn-dev_ghcr_token' in text
+    assert 'build-args-from-env' not in text
+    assert '\n    environment:\n' not in text
     assert '- cpu' in text
     assert '- cpu-latest' in text
     assert '- cpu-warm' in text
