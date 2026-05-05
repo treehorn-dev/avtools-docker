@@ -38,7 +38,8 @@ def test_cpu_dockerfile_uses_ffmpeg_onnx_base_and_composes_component_tools() -> 
     assert 'ARG BAKE_WD14_ASSETS=0' in text
     assert 'ARG WARM_MODELS=0' in text
     assert 'pip3 install --upgrade pip setuptools wheel' in text
-    assert 'pip3 install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2 cython' in text
+    assert 'pip3 install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2' in text
+    assert 'pip3 install --no-cache-dir cython' in text
     assert 'pip3 install --no-cache-dir -r /tmp/utils-cpu.txt' in text
     assert 'pip3 install --no-cache-dir git+${MADMOM_REPO}@${MADMOM_REF}' in text
     assert 'pip3 install --no-cache-dir --no-build-isolation natten==0.15.0' in text

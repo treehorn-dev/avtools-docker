@@ -26,7 +26,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY requirements/utils-cpu.txt /tmp/utils-cpu.txt
 RUN pip3 install --upgrade pip setuptools wheel
-RUN pip3 install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2 cython
+RUN pip3 install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2
+RUN pip3 install --no-cache-dir cython
 RUN pip3 install --no-cache-dir -r /tmp/utils-cpu.txt
 RUN pip3 install --no-cache-dir git+${MADMOM_REPO}@${MADMOM_REF}
 RUN pip3 install --no-cache-dir --no-build-isolation natten==0.15.0
