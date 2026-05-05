@@ -141,7 +141,7 @@ def test_assets_and_warm_dockerfiles_use_copy_layers() -> None:
     cpu_text = Path('Dockerfile.utils-cpu-warm').read_text()
     gpu_text = Path('Dockerfile.utils-gpu-warm').read_text()
 
-    assert 'ARG PYTHON_BASE_IMAGE=python:3.10-slim-bookworm' in assets_text
+    assert 'ARG PYTHON_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:baked-latest' in assets_text
     assert 'FROM ${PYTHON_BASE_IMAGE}' in assets_text
     assert 'ARG FETCH_ALLIN1_ASSETS=1' in assets_text
     assert 'ARG FETCH_SIGLIP_ASSETS=1' in assets_text
@@ -250,6 +250,7 @@ def test_woodpecker_builds_and_publishes_runtime_and_asset_variants() -> None:
     assert 'publish-cpu:' in text
     assert 'publish-assets-cpu:' in text
     assert 'publish-cpu-warm:' in text
+    assert 'depends_on:\n      - publish-ffmpeg-onnx-baked' in text
     assert 'depends_on:\n      - publish-assets-cpu\n      - publish-cpu' in text
     assert 'dockerfile: Dockerfile.utils-cpu-warm' in text
     assert 'publish-gpu:' in text
@@ -266,6 +267,7 @@ def test_woodpecker_builds_and_publishes_runtime_and_asset_variants() -> None:
     assert '- BAKE_WD14_ASSETS=1' in text
     assert '- FETCH_SIGLIP_ASSETS=1' in text
     assert '- FETCH_ALLIN1_ASSETS=1' in text
+    assert '- PYTHON_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:baked-${CI_COMMIT_SHA:0:7}' in text
     assert '- AVTOOLS_ASSETS_IMAGE=ghcr.io/treehorn-dev/avtools-assets:cpu-${CI_COMMIT_SHA:0:7}' in text
     assert '- AVTOOLS_ASSETS_IMAGE=ghcr.io/treehorn-dev/avtools-assets:gpu-${CI_COMMIT_SHA:0:7}' in text
     assert 'treehorn-dev_ghcr_username' in text

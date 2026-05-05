@@ -1,4 +1,4 @@
-ARG PYTHON_BASE_IMAGE=python:3.10-slim-bookworm
+ARG PYTHON_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:baked-latest
 FROM ${PYTHON_BASE_IMAGE}
 
 ARG OCI_REVISION=unknown
