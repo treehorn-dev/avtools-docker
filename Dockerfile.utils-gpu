@@ -55,7 +55,7 @@ RUN pip3 install --no-cache-dir \
 RUN pip3 install --no-cache-dir cython
 RUN pip3 install --no-cache-dir -r /tmp/utils-cpu.txt
 RUN pip3 install --no-cache-dir git+${MADMOM_REPO}@${MADMOM_REF}
-RUN pip3 install --no-cache-dir natten==0.17.5+torch250cu124 -f https://shi-labs.com/natten/wheels
+RUN pip3 install --no-cache-dir natten==0.17.5+torch250cu124 -f https://whl.natten.org
 RUN pip3 install --no-cache-dir numpy opencv-python-headless==4.10.0.84 openvino
 RUN git clone --depth=1 --branch "${ALLIN1_REF}" "${ALLIN1_REPO}" /tmp/all-in-one && \
     pip3 install --no-cache-dir /tmp/all-in-one && \

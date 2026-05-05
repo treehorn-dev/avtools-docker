@@ -146,7 +146,7 @@ def test_gpu_dockerfile_redeclares_jellyfin_version_after_from() -> None:
     assert 'torch==2.5.0 torchvision==0.20.0 torchaudio==2.5.0' in text
     assert 'torch==2.5.0 torchvision==0.20.0 torchaudio==2.5.0 cython' not in text
     assert 'RUN pip3 install --no-cache-dir cython' in text
-    assert 'natten==0.17.5+torch250cu124 -f https://shi-labs.com/natten/wheels' in text
+    assert 'natten==0.17.5+torch250cu124 -f https://whl.natten.org' in text
 
 
 def test_smoke_script_checks_composed_tooling() -> None:
