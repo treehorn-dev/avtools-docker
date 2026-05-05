@@ -156,6 +156,7 @@ def test_gpu_dockerfile_redeclares_jellyfin_version_after_from() -> None:
     assert 'torch==2.5.0 torchvision==0.20.0 torchaudio==2.5.0 cython' not in text
     assert 'RUN pip3 install --no-cache-dir cython' in text
     assert 'COPY requirements/utils-gpu-constraints.txt /tmp/utils-gpu-constraints.txt' in text
+    assert "RUN sed -i 's/^sympy==1.13.3$/sympy==1.13.1/' /tmp/utils-cpu.txt" in text
     assert 'RUN pip3 install --no-cache-dir -c /tmp/utils-gpu-constraints.txt -r /tmp/utils-cpu.txt' in text
     assert 'sympy==1.13.1' in constraints
     assert 'natten==0.17.5+torch250cu124 -f https://whl.natten.org' in text

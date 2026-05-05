@@ -55,6 +55,7 @@ RUN ln -s /usr/lib/jellyfin-ffmpeg/ffmpeg /usr/local/bin/ffmpeg && \
 
 COPY requirements/utils-cpu.txt /tmp/utils-cpu.txt
 COPY requirements/utils-gpu-constraints.txt /tmp/utils-gpu-constraints.txt
+RUN sed -i 's/^sympy==1.13.3$/sympy==1.13.1/' /tmp/utils-cpu.txt
 RUN pip3 install --upgrade pip setuptools wheel
 RUN pip3 install --no-cache-dir \
     --index-url https://download.pytorch.org/whl/cu124 \
