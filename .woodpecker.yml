@@ -31,6 +31,9 @@ steps:
           - ".gitmodules"
           - ".woodpecker.yml"
           - "Dockerfile.utils-cpu"
+          - "Dockerfile.utils-cpu-warm"
+          - "Dockerfile.utils-gpu"
+          - "Dockerfile.utils-gpu-warm"
           - "Makefile"
           - "pyproject.toml"
           - "requirements/**"
@@ -52,7 +55,13 @@ steps:
       - path:
           - ".gitmodules"
           - ".woodpecker.yml"
+          - "Dockerfile.utils-cpu"
+          - "Dockerfile.utils-cpu-warm"
           - "third_party/ffmpeg-onnx/**"
+          - "Makefile"
+          - "requirements/**"
+          - "scripts/**"
+          - "tests/**"
       - event: manual
 
   publish-ffmpeg-onnx-base:
@@ -75,7 +84,13 @@ steps:
       - path:
           - ".gitmodules"
           - ".woodpecker.yml"
+          - "Dockerfile.utils-cpu"
+          - "Dockerfile.utils-cpu-warm"
           - "third_party/ffmpeg-onnx/**"
+          - "Makefile"
+          - "requirements/**"
+          - "scripts/**"
+          - "tests/**"
       - event: manual
 
   publish-ffmpeg-onnx-baked:
@@ -100,7 +115,13 @@ steps:
       - path:
           - ".gitmodules"
           - ".woodpecker.yml"
+          - "Dockerfile.utils-cpu"
+          - "Dockerfile.utils-cpu-warm"
           - "third_party/ffmpeg-onnx/**"
+          - "Makefile"
+          - "requirements/**"
+          - "scripts/**"
+          - "tests/**"
       - event: manual
 
   publish-cpu:
@@ -128,6 +149,7 @@ steps:
           - ".gitmodules"
           - ".woodpecker.yml"
           - "Dockerfile.utils-cpu"
+          - "Dockerfile.utils-cpu-warm"
           - "Makefile"
           - "pyproject.toml"
           - "requirements/**"
@@ -144,7 +166,7 @@ steps:
       repo: ghcr.io/treehorn-dev/avtools-utils
       registry: ghcr.io
       context: .
-      dockerfile: Dockerfile.utils-cpu
+      dockerfile: Dockerfile.utils-cpu-warm
       username:
         from_secret: treehorn-dev_ghcr_username
       password:
@@ -153,7 +175,7 @@ steps:
         - cpu-warm
         - cpu-warm-latest
       build_args:
-        - FFMPEG_ONNX_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:baked
+        - AVTOOLS_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:cpu
         - BAKE_WD14_ASSETS=1
         - WARM_MODELS=1
     when:
@@ -161,6 +183,7 @@ steps:
           - ".gitmodules"
           - ".woodpecker.yml"
           - "Dockerfile.utils-cpu"
+          - "Dockerfile.utils-cpu-warm"
           - "Makefile"
           - "pyproject.toml"
           - "requirements/**"

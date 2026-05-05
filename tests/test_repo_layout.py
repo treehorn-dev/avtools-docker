@@ -195,6 +195,7 @@ def test_woodpecker_builds_and_publishes_cpu_variants_only() -> None:
     assert '- FFMPEG_ONNX_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:baked' in text
     assert 'publish-cpu:' in text
     assert 'publish-cpu-warm:' in text
+    assert 'dockerfile: Dockerfile.utils-cpu-warm' in text
     assert 'ghcr.io/treehorn-dev/avtools-utils' in text
     assert '- BAKE_WD14_ASSETS=0' in text
     assert '- WARM_MODELS=0' in text
@@ -208,4 +209,6 @@ def test_woodpecker_builds_and_publishes_cpu_variants_only() -> None:
     assert '- cpu-latest' in text
     assert '- cpu-warm' in text
     assert '- cpu-warm-latest' in text
+    assert 'Dockerfile.utils-cpu' in text
+    assert 'Dockerfile.utils-cpu-warm' in text
     assert ':gpu' not in text
