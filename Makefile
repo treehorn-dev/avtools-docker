@@ -1,5 +1,7 @@
 IMAGE_CPU ?= avtools-utils:cpu
 IMAGE_CPU_WARM ?= avtools-utils:cpu-warm
+IMAGE_GPU ?= avtools-utils:gpu
+IMAGE_GPU_WARM ?= avtools-utils:gpu-warm
 FFMPEG_ONNX_IMAGE ?= ffmpeg-onnx:cpu
 FFMPEG_ONNX_BASE_IMAGE ?= ffmpeg-onnx-base
 FFMPEG_ONNX_BAKED_IMAGE ?= ffmpeg-onnx:baked
@@ -9,7 +11,7 @@ VENV ?= .venv
 PYTHON ?= $(VENV)/bin/python
 PIP ?= $(VENV)/bin/pip
 
-.PHONY: venv test build-cpu build-cpu-warm build-ffmpeg-onnx build-ffmpeg-onnx-base fetch-ffmpeg-onnx-assets build-ffmpeg-onnx-baked build-wd14-cpu build-transnetv2-cpu smoke-cpu smoke-cpu-warm
+.PHONY: venv test build-cpu build-cpu-warm build-gpu build-gpu-warm build-ffmpeg-onnx build-ffmpeg-onnx-base fetch-ffmpeg-onnx-assets build-ffmpeg-onnx-baked build-wd14-cpu build-transnetv2-cpu smoke-cpu smoke-cpu-warm
 
 venv:
 	python3 -m venv $(VENV)
@@ -22,7 +24,13 @@ build-cpu:
 	docker build -f Dockerfile.utils-cpu --build-arg BAKE_WD14_ASSETS=0 --build-arg WARM_MODELS=0 -t $(IMAGE_CPU) .
 
 build-cpu-warm:
-	docker build -f Dockerfile.utils-cpu --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 -t $(IMAGE_CPU_WARM) .
+	docker build -f Dockerfile.utils-cpu-warm --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_CPU) --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 -t $(IMAGE_CPU_WARM) .
+
+build-gpu:
+	docker build -f Dockerfile.utils-gpu --build-arg BAKE_WD14_ASSETS=0 --build-arg WARM_MODELS=0 -t $(IMAGE_GPU) .
+
+build-gpu-warm:
+	docker build -f Dockerfile.utils-gpu-warm --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_GPU) --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 -t $(IMAGE_GPU_WARM) .
 
 build-ffmpeg-onnx:
 	docker build -t ffmpeg-onnx:cpu third_party/ffmpeg-onnx

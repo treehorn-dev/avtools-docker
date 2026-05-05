@@ -5,6 +5,9 @@ from pathlib import Path
 
 def test_repo_has_initial_cpu_layout() -> None:
     assert Path('Dockerfile.utils-cpu').exists()
+    assert Path('Dockerfile.utils-cpu-warm').exists()
+    assert Path('Dockerfile.utils-gpu').exists()
+    assert Path('Dockerfile.utils-gpu-warm').exists()
     assert Path('Makefile').exists()
     assert Path('README.md').exists()
     assert Path('.woodpecker.yml').exists()
@@ -35,7 +38,7 @@ def test_cpu_dockerfile_uses_ffmpeg_onnx_base_and_composes_component_tools() -> 
     assert 'ARG BAKE_WD14_ASSETS=0' in text
     assert 'ARG WARM_MODELS=0' in text
     assert 'pip3 install --upgrade pip setuptools wheel' in text
-    assert 'pip3 install --no-cache-dir torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2 cython' in text
+    assert 'pip3 install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2 cython' in text
     assert 'pip3 install --no-cache-dir -r /tmp/utils-cpu.txt' in text
     assert 'pip3 install --no-cache-dir git+${MADMOM_REPO}@${MADMOM_REF}' in text
     assert 'pip3 install --no-cache-dir --no-build-isolation natten==0.15.0' in text
@@ -68,6 +71,8 @@ def test_makefile_exposes_build_test_and_smoke_targets() -> None:
 
     assert 'build-cpu:' in text
     assert 'build-cpu-warm:' in text
+    assert 'build-gpu:' in text
+    assert 'build-gpu-warm:' in text
     assert 'build-ffmpeg-onnx:' in text
     assert 'build-ffmpeg-onnx-base:' in text
     assert 'fetch-ffmpeg-onnx-assets:' in text
@@ -78,7 +83,9 @@ def test_makefile_exposes_build_test_and_smoke_targets() -> None:
     assert 'smoke-cpu:' in text
     assert 'smoke-cpu-warm:' in text
     assert 'docker build -f Dockerfile.utils-cpu --build-arg BAKE_WD14_ASSETS=0 --build-arg WARM_MODELS=0 -t $(IMAGE_CPU) .' in text
-    assert 'docker build -f Dockerfile.utils-cpu --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 -t $(IMAGE_CPU_WARM) .' in text
+    assert 'docker build -f Dockerfile.utils-cpu-warm --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_CPU) --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 -t $(IMAGE_CPU_WARM) .' in text
+    assert 'docker build -f Dockerfile.utils-gpu --build-arg BAKE_WD14_ASSETS=0 --build-arg WARM_MODELS=0 -t $(IMAGE_GPU) .' in text
+    assert 'docker build -f Dockerfile.utils-gpu-warm --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_GPU) --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 -t $(IMAGE_GPU_WARM) .' in text
     assert 'docker build -t ffmpeg-onnx:cpu third_party/ffmpeg-onnx' in text
     assert 'docker build -t ffmpeg-onnx-base third_party/ffmpeg-onnx' in text
     assert 'bash ./scripts/fetch-release-assets.sh nudenet-assets-v1' in text
@@ -110,7 +117,23 @@ def test_readme_mentions_component_boundaries_and_final_image() -> None:
     assert 'make build-transnetv2-cpu' in text
     assert 'make build-cpu' in text
     assert 'make build-cpu-warm' in text
+    assert 'make build-gpu' in text
+    assert 'make build-gpu-warm' in text
     assert 'The warmed CPU image additionally contains' in text
+
+
+def test_warm_dockerfiles_layer_from_cool_images() -> None:
+    cpu_text = Path('Dockerfile.utils-cpu-warm').read_text()
+    gpu_text = Path('Dockerfile.utils-gpu-warm').read_text()
+
+    assert 'ARG AVTOOLS_BASE_IMAGE=avtools-utils:cpu' in cpu_text
+    assert 'FROM ${AVTOOLS_BASE_IMAGE}' in cpu_text
+    assert '/usr/local/bin/fetch-wd14-assets' in cpu_text
+    assert '/usr/local/bin/warm-models' in cpu_text
+    assert 'ARG AVTOOLS_BASE_IMAGE=avtools-utils:gpu' in gpu_text
+    assert 'FROM ${AVTOOLS_BASE_IMAGE}' in gpu_text
+    assert '/usr/local/bin/fetch-wd14-assets' in gpu_text
+    assert '/usr/local/bin/warm-models' in gpu_text
 
 
 def test_smoke_script_checks_composed_tooling() -> None:

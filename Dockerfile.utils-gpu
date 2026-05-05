@@ -1,7 +1,9 @@
-ARG FFMPEG_ONNX_BASE_IMAGE=ffmpeg-onnx:baked
-FROM ${FFMPEG_ONNX_BASE_IMAGE}
+ARG CUDA_BASE_IMAGE=nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+ARG JELLYFIN_FFMPEG_VERSION=7.1.3-6
+FROM ${CUDA_BASE_IMAGE}
 
 ARG DEBIAN_FRONTEND=noninteractive
+ARG TARGETARCH=amd64
 ARG ALLIN1_REPO=https://github.com/docker-audio-tools/all-in-one-docker-cpu-apple-silicon.git
 ARG ALLIN1_REF=main
 ARG MADMOM_REPO=https://github.com/CPJKU/madmom
@@ -13,7 +15,11 @@ ENV HF_HOME=/opt/hf-cache
 ENV TRANSFORMERS_CACHE=/opt/hf-cache
 ENV TORCH_HOME=/opt/torch-cache
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN echo "deb [trusted=yes] http://archive.ubuntu.com/ubuntu jammy main restricted universe multiverse" > /etc/apt/sources.list && \
+    echo "deb [trusted=yes] http://archive.ubuntu.com/ubuntu jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list && \
+    echo "deb [trusted=yes] http://archive.ubuntu.com/ubuntu jammy-security main restricted universe multiverse" >> /etc/apt/sources.list && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
     cmake \
     curl \
     g++ \
@@ -22,33 +28,53 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python-is-python3 \
     python3.10-dev \
     python3.10-venv \
+    python3 \
+    python3-pip \
+    wget \
+    libgomp1 \
+    libopenblas0 \
+    libusb-1.0-0 \
     && rm -rf /var/lib/apt/lists/*
+
+RUN wget -O /tmp/jellyfin-ffmpeg7.deb \
+    "https://github.com/jellyfin/jellyfin-ffmpeg/releases/download/v${JELLYFIN_FFMPEG_VERSION}/jellyfin-ffmpeg7_${JELLYFIN_FFMPEG_VERSION}-jammy_${TARGETARCH}.deb" && \
+    apt-get update && \
+    apt-get install -y --fix-missing --no-install-recommends /tmp/jellyfin-ffmpeg7.deb && \
+    rm -f /tmp/jellyfin-ffmpeg7.deb && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN ln -s /usr/lib/jellyfin-ffmpeg/ffmpeg /usr/local/bin/ffmpeg && \
+    ln -s /usr/lib/jellyfin-ffmpeg/ffprobe /usr/local/bin/ffprobe
 
 COPY requirements/utils-cpu.txt /tmp/utils-cpu.txt
 RUN pip3 install --upgrade pip setuptools wheel
-RUN pip3 install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2 cython
+RUN pip3 install --no-cache-dir \
+    --index-url https://download.pytorch.org/whl/cu124 \
+    torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 cython
 RUN pip3 install --no-cache-dir -r /tmp/utils-cpu.txt
 RUN pip3 install --no-cache-dir git+${MADMOM_REPO}@${MADMOM_REF}
-RUN pip3 install --no-cache-dir --no-build-isolation natten==0.15.0
+RUN pip3 install --no-cache-dir --no-build-isolation natten==0.17.5
+RUN pip3 install --no-cache-dir numpy opencv-python-headless==4.10.0.84 openvino
 RUN git clone --depth=1 --branch "${ALLIN1_REF}" "${ALLIN1_REPO}" /tmp/all-in-one && \
     pip3 install --no-cache-dir /tmp/all-in-one && \
     rm -rf /tmp/all-in-one /root/.cache/pip
 
+COPY third_party/ffmpeg-onnx/process_nudenet.py /usr/local/bin/process_nudenet.py
+COPY third_party/ffmpeg-onnx/viz_nudenet.py /usr/local/bin/viz_nudenet.py
+COPY third_party/ffmpeg-onnx/ffmpeg_onnx_cli.py /usr/local/bin/ffmpeg-onnx
 COPY scripts/siglip2_embed.py /usr/local/bin/siglip2-embed
 COPY scripts/warm-models.sh /usr/local/bin/warm-models
 COPY third_party/wd14-tagger-standalone/scripts/fetch-hf-assets.sh /usr/local/bin/fetch-wd14-assets
-RUN chmod +x /usr/local/bin/siglip2-embed /usr/local/bin/warm-models /usr/local/bin/fetch-wd14-assets
+RUN chmod +x /usr/local/bin/ffmpeg-onnx /usr/local/bin/siglip2-embed /usr/local/bin/warm-models /usr/local/bin/fetch-wd14-assets
 
 COPY third_party/wd14-tagger-standalone /tmp/wd14-tagger-standalone
 RUN sed -i 's/requires-python = ">=3.11"/requires-python = ">=3.10"/' /tmp/wd14-tagger-standalone/pyproject.toml && \
-    python3 -m venv /opt/wd14-venv && \
+    python3 -m venv /opt/wd14-venv --system-site-packages && \
     /opt/wd14-venv/bin/pip install --upgrade pip setuptools wheel && \
     /opt/wd14-venv/bin/pip install --no-cache-dir /tmp/wd14-tagger-standalone && \
     ln -s /opt/wd14-venv/bin/wd14-tagger /usr/local/bin/wd14-tagger && \
     rm -rf /tmp/wd14-tagger-standalone
 RUN if [ "$BAKE_WD14_ASSETS" = "1" ]; then /bin/sh /usr/local/bin/fetch-wd14-assets /opt/wd14-models/wd14-convnextv2.v1; fi
-
-RUN pip3 install --no-cache-dir opencv-python-headless==4.10.0.84
 
 COPY third_party/transnetv2-cli /tmp/transnetv2-cli
 RUN sed -i 's/requires-python = ">=3.11"/requires-python = ">=3.10"/' /tmp/transnetv2-cli/pyproject.toml && \

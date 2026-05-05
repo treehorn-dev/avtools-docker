@@ -5,7 +5,7 @@ CPU/GPU media-utils image family for ffmpeg, ffmpeg-onnx-style tooling, allin1, 
 ## Current Scope
 
 This repo is intentionally narrow:
-- CPU-first image family
+- CPU-first shipping image family, with local GPU build scaffolding
 - media/tooling substrate only
 - no project app code baked into the image
 - local pytest harness for scaffold verification
@@ -16,7 +16,7 @@ This repo is intentionally narrow:
 
 ## Final Image
 
-`make build-cpu` builds the lean default CPU image. `make build-cpu-warm` builds the heavier warmed variant. The CPU image contains:
+`make build-cpu` builds the lean default CPU image. `make build-cpu-warm` builds the heavier warmed variant as a thin layer on top of `cpu`. `make build-gpu` and `make build-gpu-warm` define the parallel CUDA-oriented local builds, with `gpu-warm` layered on top of `gpu`. The CPU image contains:
 - `allin1`
 - `siglip2-embed`
 - `transnetv2-cli`
@@ -76,6 +76,8 @@ make test
 ```bash
 make build-cpu
 make build-cpu-warm
+make build-gpu
+make build-gpu-warm
 ```
 
 ## CI Publish Tags
@@ -88,6 +90,8 @@ Woodpecker currently publishes only the CPU variants to GHCR:
 - `ghcr.io/treehorn-dev/avtools-utils:cpu-warm-latest`
 
 There is intentionally no bare `latest` tag.
+
+The GPU variants are local scaffolding for now and are intentionally not in CI yet.
 
 ## Smoke Test
 
