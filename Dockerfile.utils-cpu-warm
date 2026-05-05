@@ -1,5 +1,6 @@
 ARG AVTOOLS_BASE_IMAGE=avtools-utils:cpu
 ARG AVTOOLS_ASSETS_IMAGE=avtools-assets:cpu
+FROM ${AVTOOLS_ASSETS_IMAGE} AS assets
 FROM ${AVTOOLS_BASE_IMAGE}
 
 ARG OCI_REVISION=unknown
@@ -9,6 +10,6 @@ LABEL org.opencontainers.image.revision="${OCI_REVISION}" \
       org.opencontainers.image.source="${OCI_SOURCE}" \
       org.opencontainers.image.created="${OCI_CREATED}"
 
-COPY --from=${AVTOOLS_ASSETS_IMAGE} /opt/hf-cache /opt/hf-cache
-COPY --from=${AVTOOLS_ASSETS_IMAGE} /opt/torch-cache /opt/torch-cache
-COPY --from=${AVTOOLS_ASSETS_IMAGE} /opt/wd14-models /opt/wd14-models
+COPY --from=assets /opt/hf-cache /opt/hf-cache
+COPY --from=assets /opt/torch-cache /opt/torch-cache
+COPY --from=assets /opt/wd14-models /opt/wd14-models

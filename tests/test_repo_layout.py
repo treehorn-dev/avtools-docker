@@ -154,16 +154,18 @@ def test_assets_and_warm_dockerfiles_use_copy_layers() -> None:
     assert '955717e8-8726e21a.th' in assets_text
     assert 'ARG AVTOOLS_BASE_IMAGE=avtools-utils:cpu' in cpu_text
     assert 'ARG AVTOOLS_ASSETS_IMAGE=avtools-assets:cpu' in cpu_text
+    assert 'FROM ${AVTOOLS_ASSETS_IMAGE} AS assets' in cpu_text
     assert 'FROM ${AVTOOLS_BASE_IMAGE}' in cpu_text
-    assert 'COPY --from=${AVTOOLS_ASSETS_IMAGE} /opt/hf-cache /opt/hf-cache' in cpu_text
-    assert 'COPY --from=${AVTOOLS_ASSETS_IMAGE} /opt/torch-cache /opt/torch-cache' in cpu_text
-    assert 'COPY --from=${AVTOOLS_ASSETS_IMAGE} /opt/wd14-models /opt/wd14-models' in cpu_text
+    assert 'COPY --from=assets /opt/hf-cache /opt/hf-cache' in cpu_text
+    assert 'COPY --from=assets /opt/torch-cache /opt/torch-cache' in cpu_text
+    assert 'COPY --from=assets /opt/wd14-models /opt/wd14-models' in cpu_text
     assert 'ARG AVTOOLS_BASE_IMAGE=avtools-utils:gpu' in gpu_text
     assert 'ARG AVTOOLS_ASSETS_IMAGE=avtools-assets:gpu' in gpu_text
+    assert 'FROM ${AVTOOLS_ASSETS_IMAGE} AS assets' in gpu_text
     assert 'FROM ${AVTOOLS_BASE_IMAGE}' in gpu_text
-    assert 'COPY --from=${AVTOOLS_ASSETS_IMAGE} /opt/hf-cache /opt/hf-cache' in gpu_text
-    assert 'COPY --from=${AVTOOLS_ASSETS_IMAGE} /opt/torch-cache /opt/torch-cache' in gpu_text
-    assert 'COPY --from=${AVTOOLS_ASSETS_IMAGE} /opt/wd14-models /opt/wd14-models' in gpu_text
+    assert 'COPY --from=assets /opt/hf-cache /opt/hf-cache' in gpu_text
+    assert 'COPY --from=assets /opt/torch-cache /opt/torch-cache' in gpu_text
+    assert 'COPY --from=assets /opt/wd14-models /opt/wd14-models' in gpu_text
 
 
 def test_gpu_dockerfile_redeclares_jellyfin_version_after_from() -> None:
