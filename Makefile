@@ -26,7 +26,7 @@ build-cpu:
 	docker build -f Dockerfile.utils-cpu --build-arg BAKE_WD14_ASSETS=0 --build-arg WARM_MODELS=0 -t $(IMAGE_CPU) .
 
 build-assets-cpu:
-	docker build -f Dockerfile.assets --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_CPU) --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 --build-arg WARM_ALLIN1=1 -t $(IMAGE_ASSETS_CPU) .
+	docker build -f Dockerfile.assets --build-arg BAKE_WD14_ASSETS=1 --build-arg FETCH_SIGLIP_ASSETS=1 --build-arg FETCH_ALLIN1_ASSETS=1 -t $(IMAGE_ASSETS_CPU) .
 
 build-cpu-warm:
 	docker build -f Dockerfile.utils-cpu-warm --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_CPU) --build-arg AVTOOLS_ASSETS_IMAGE=$(IMAGE_ASSETS_CPU) -t $(IMAGE_CPU_WARM) .
@@ -35,7 +35,7 @@ build-gpu:
 	docker build -f Dockerfile.utils-gpu --build-arg BAKE_WD14_ASSETS=0 --build-arg WARM_MODELS=0 -t $(IMAGE_GPU) .
 
 build-assets-gpu:
-	docker build -f Dockerfile.assets --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_GPU) --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 --build-arg WARM_ALLIN1=0 -t $(IMAGE_ASSETS_GPU) .
+	docker build -f Dockerfile.assets --build-arg BAKE_WD14_ASSETS=1 --build-arg FETCH_SIGLIP_ASSETS=1 --build-arg FETCH_ALLIN1_ASSETS=1 -t $(IMAGE_ASSETS_GPU) .
 
 build-gpu-warm:
 	docker build -f Dockerfile.utils-gpu-warm --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_GPU) --build-arg AVTOOLS_ASSETS_IMAGE=$(IMAGE_ASSETS_GPU) -t $(IMAGE_GPU_WARM) .

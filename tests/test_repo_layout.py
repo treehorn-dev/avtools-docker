@@ -92,10 +92,10 @@ def test_makefile_exposes_build_test_and_smoke_targets() -> None:
     assert 'smoke-cpu:' in text
     assert 'smoke-cpu-warm:' in text
     assert 'docker build -f Dockerfile.utils-cpu --build-arg BAKE_WD14_ASSETS=0 --build-arg WARM_MODELS=0 -t $(IMAGE_CPU) .' in text
-    assert 'docker build -f Dockerfile.assets --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_CPU) --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 --build-arg WARM_ALLIN1=1 -t $(IMAGE_ASSETS_CPU) .' in text
+    assert 'docker build -f Dockerfile.assets --build-arg BAKE_WD14_ASSETS=1 --build-arg FETCH_SIGLIP_ASSETS=1 --build-arg FETCH_ALLIN1_ASSETS=1 -t $(IMAGE_ASSETS_CPU) .' in text
     assert 'docker build -f Dockerfile.utils-cpu-warm --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_CPU) --build-arg AVTOOLS_ASSETS_IMAGE=$(IMAGE_ASSETS_CPU) -t $(IMAGE_CPU_WARM) .' in text
     assert 'docker build -f Dockerfile.utils-gpu --build-arg BAKE_WD14_ASSETS=0 --build-arg WARM_MODELS=0 -t $(IMAGE_GPU) .' in text
-    assert 'docker build -f Dockerfile.assets --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_GPU) --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 --build-arg WARM_ALLIN1=0 -t $(IMAGE_ASSETS_GPU) .' in text
+    assert 'docker build -f Dockerfile.assets --build-arg BAKE_WD14_ASSETS=1 --build-arg FETCH_SIGLIP_ASSETS=1 --build-arg FETCH_ALLIN1_ASSETS=1 -t $(IMAGE_ASSETS_GPU) .' in text
     assert 'docker build -f Dockerfile.utils-gpu-warm --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_GPU) --build-arg AVTOOLS_ASSETS_IMAGE=$(IMAGE_ASSETS_GPU) -t $(IMAGE_GPU_WARM) .' in text
     assert 'docker build -t ffmpeg-onnx:cpu third_party/ffmpeg-onnx' in text
     assert 'docker build -t ffmpeg-onnx-base third_party/ffmpeg-onnx' in text
@@ -133,6 +133,7 @@ def test_readme_mentions_component_boundaries_and_final_image() -> None:
     assert 'make build-assets-gpu' in text
     assert 'make build-gpu-warm' in text
     assert 'The dedicated assets image family currently bakes' in text
+    assert 'without waiting for the full runtime image' in text
 
 
 def test_assets_and_warm_dockerfiles_use_copy_layers() -> None:
@@ -140,12 +141,16 @@ def test_assets_and_warm_dockerfiles_use_copy_layers() -> None:
     cpu_text = Path('Dockerfile.utils-cpu-warm').read_text()
     gpu_text = Path('Dockerfile.utils-gpu-warm').read_text()
 
-    assert 'ARG AVTOOLS_BASE_IMAGE=avtools-utils:cpu' in assets_text
-    assert 'FROM ${AVTOOLS_BASE_IMAGE}' in assets_text
-    assert 'ARG WARM_ALLIN1=1' in assets_text
-    assert 'ENV WARM_ALLIN1=${WARM_ALLIN1}' in assets_text
+    assert 'ARG PYTHON_BASE_IMAGE=python:3.10-slim-bookworm' in assets_text
+    assert 'FROM ${PYTHON_BASE_IMAGE}' in assets_text
+    assert 'ARG FETCH_ALLIN1_ASSETS=1' in assets_text
+    assert 'ARG FETCH_SIGLIP_ASSETS=1' in assets_text
+    assert 'ARG ALLIN1_DEMUCS_URL=https://dl.fbaipublicfiles.com/demucs/hybrid_transformer/955717e8-8726e21a.th' in assets_text
+    assert 'ENV HF_HOME=/opt/hf-cache' in assets_text
+    assert 'ENV TORCH_HOME=/opt/torch-cache' in assets_text
     assert '/usr/local/bin/fetch-wd14-assets' in assets_text
-    assert '/usr/local/bin/warm-models' in assets_text
+    assert 'snapshot_download(' in assets_text
+    assert '955717e8-8726e21a.th' in assets_text
     assert 'ARG AVTOOLS_BASE_IMAGE=avtools-utils:cpu' in cpu_text
     assert 'ARG AVTOOLS_ASSETS_IMAGE=avtools-assets:cpu' in cpu_text
     assert 'FROM ${AVTOOLS_BASE_IMAGE}' in cpu_text
@@ -242,12 +247,12 @@ def test_woodpecker_builds_and_publishes_runtime_and_asset_variants() -> None:
     assert 'publish-cpu:' in text
     assert 'publish-assets-cpu:' in text
     assert 'publish-cpu-warm:' in text
-    assert 'depends_on:\n      - publish-assets-cpu' in text
+    assert 'depends_on:\n      - publish-assets-cpu\n      - publish-cpu' in text
     assert 'dockerfile: Dockerfile.utils-cpu-warm' in text
     assert 'publish-gpu:' in text
     assert 'publish-assets-gpu:' in text
     assert 'publish-gpu-warm:' in text
-    assert 'depends_on:\n      - publish-assets-gpu' in text
+    assert 'depends_on:\n      - publish-assets-gpu\n      - publish-gpu' in text
     assert 'dockerfile: Dockerfile.assets' in text
     assert 'dockerfile: Dockerfile.utils-gpu' in text
     assert 'dockerfile: Dockerfile.utils-gpu-warm' in text
@@ -256,11 +261,8 @@ def test_woodpecker_builds_and_publishes_runtime_and_asset_variants() -> None:
     assert '- BAKE_WD14_ASSETS=0' in text
     assert '- WARM_MODELS=0' in text
     assert '- BAKE_WD14_ASSETS=1' in text
-    assert '- WARM_MODELS=1' in text
-    assert '- WARM_ALLIN1=0' in text
-    assert '- WARM_ALLIN1=1' in text
-    assert '- AVTOOLS_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:cpu-${CI_COMMIT_SHA:0:7}' in text
-    assert '- AVTOOLS_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:gpu-${CI_COMMIT_SHA:0:7}' in text
+    assert '- FETCH_SIGLIP_ASSETS=1' in text
+    assert '- FETCH_ALLIN1_ASSETS=1' in text
     assert '- AVTOOLS_ASSETS_IMAGE=ghcr.io/treehorn-dev/avtools-assets:cpu-${CI_COMMIT_SHA:0:7}' in text
     assert '- AVTOOLS_ASSETS_IMAGE=ghcr.io/treehorn-dev/avtools-assets:gpu-${CI_COMMIT_SHA:0:7}' in text
     assert 'treehorn-dev_ghcr_username' in text

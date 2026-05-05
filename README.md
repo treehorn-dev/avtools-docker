@@ -16,7 +16,7 @@ This repo is intentionally narrow:
 
 ## Final Image
 
-`make build-cpu` builds the lean default CPU image. `make build-assets-cpu` builds the dedicated asset layer for that image family. `make build-cpu-warm` then builds a thin warmed variant by copying those assets onto `cpu`. `make build-gpu`, `make build-assets-gpu`, and `make build-gpu-warm` define the parallel CUDA-oriented path, with `gpu-warm` copying from a GPU-specific assets image. The CPU image contains:
+`make build-cpu` builds the lean default CPU image. `make build-assets-cpu` builds the dedicated asset layer for that image family without waiting for the full runtime image. `make build-cpu-warm` then builds a thin warmed variant by copying those assets onto `cpu`. `make build-gpu`, `make build-assets-gpu`, and `make build-gpu-warm` define the parallel CUDA-oriented path, with `gpu-warm` copying from a GPU-specific assets image. The CPU image contains:
 - `allin1`
 - `siglip2-embed`
 - `transnetv2-cli`
@@ -27,7 +27,7 @@ This repo is intentionally narrow:
 The dedicated assets image family currently bakes:
 - `wd14-tagger` default ConvNeXTV2 model baked from Hugging Face
 - SigLIP2 Hugging Face cache tree
-- `allin1`/demucs torch cache tree for CPU
+- `allin1`/demucs torch cache tree from the explicit Meta Demucs checkpoint URL
 
 The warmed CPU image additionally contains those copied assets without rerunning inference during the warm build.
 
@@ -144,11 +144,12 @@ siglip2-embed \
 
 By default it uses `google/siglip2-base-patch16-naflex` on `cpu`.
 
-The asset image build runs the tiny warm-cache step during packaging:
-- a synthetic `wav` through `allin1` on CPU-capable asset builds
-- a synthetic `jpg` through `siglip2-embed`
+The asset image build fetches explicit assets during packaging:
+- WD14 files from Hugging Face
+- SigLIP2 snapshot files from Hugging Face
+- the default `allin1` Demucs checkpoint from Meta's public model list
 
-That forces the heavy first-run assets into a dedicated layer instead of making the warm image discover them at the end of a long build. GPU asset builds currently skip `allin1` warm-up in CI because the runner does not expose an NVIDIA driver.
+That forces the heavy first-run assets into a dedicated early layer instead of making the warm image discover them at the end of a long build.
 
 ## Planned Next Steps
 

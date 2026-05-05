@@ -169,7 +169,7 @@ steps:
   publish-assets-cpu:
     image: woodpeckerci/plugin-kaniko
     depends_on:
-      - publish-cpu
+      - sync-submodules
     settings:
       repo: ghcr.io/treehorn-dev/avtools-assets
       registry: ghcr.io
@@ -184,12 +184,11 @@ steps:
         - cpu-latest
         - cpu-${CI_COMMIT_SHA:0:7}
       build_args:
-        - AVTOOLS_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:cpu-${CI_COMMIT_SHA:0:7}
         - OCI_REVISION=${CI_COMMIT_SHA:0:7}
         - OCI_CREATED=${CI_PIPELINE_CREATED}
         - BAKE_WD14_ASSETS=1
-        - WARM_MODELS=1
-        - WARM_ALLIN1=1
+        - FETCH_SIGLIP_ASSETS=1
+        - FETCH_ALLIN1_ASSETS=1
     when:
       - path:
           - ".gitmodules"
@@ -209,6 +208,7 @@ steps:
     image: woodpeckerci/plugin-kaniko
     depends_on:
       - publish-assets-cpu
+      - publish-cpu
     settings:
       repo: ghcr.io/treehorn-dev/avtools-utils
       registry: ghcr.io
@@ -281,7 +281,7 @@ steps:
   publish-assets-gpu:
     image: woodpeckerci/plugin-kaniko
     depends_on:
-      - publish-gpu
+      - sync-submodules
     settings:
       repo: ghcr.io/treehorn-dev/avtools-assets
       registry: ghcr.io
@@ -296,12 +296,11 @@ steps:
         - gpu-latest
         - gpu-${CI_COMMIT_SHA:0:7}
       build_args:
-        - AVTOOLS_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:gpu-${CI_COMMIT_SHA:0:7}
         - OCI_REVISION=${CI_COMMIT_SHA:0:7}
         - OCI_CREATED=${CI_PIPELINE_CREATED}
         - BAKE_WD14_ASSETS=1
-        - WARM_MODELS=1
-        - WARM_ALLIN1=0
+        - FETCH_SIGLIP_ASSETS=1
+        - FETCH_ALLIN1_ASSETS=1
     when:
       - path:
           - ".gitmodules"
@@ -321,6 +320,7 @@ steps:
     image: woodpeckerci/plugin-kaniko
     depends_on:
       - publish-assets-gpu
+      - publish-gpu
     settings:
       repo: ghcr.io/treehorn-dev/avtools-utils
       registry: ghcr.io

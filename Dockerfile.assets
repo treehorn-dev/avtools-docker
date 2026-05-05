@@ -1,19 +1,55 @@
-ARG AVTOOLS_BASE_IMAGE=avtools-utils:cpu
-FROM ${AVTOOLS_BASE_IMAGE}
+ARG PYTHON_BASE_IMAGE=python:3.10-slim-bookworm
+FROM ${PYTHON_BASE_IMAGE}
 
 ARG OCI_REVISION=unknown
 ARG OCI_SOURCE=https://github.com/treehorn-dev/avtools-docker
 ARG OCI_CREATED=unknown
 ARG BAKE_WD14_ASSETS=1
-ARG WARM_MODELS=1
-ARG WARM_ALLIN1=1
+ARG FETCH_SIGLIP_ASSETS=1
+ARG FETCH_ALLIN1_ASSETS=1
+ARG SIGLIP_MODEL_ID=google/siglip2-base-patch16-naflex
+ARG ALLIN1_DEMUCS_URL=https://dl.fbaipublicfiles.com/demucs/hybrid_transformer/955717e8-8726e21a.th
 
 LABEL org.opencontainers.image.revision="${OCI_REVISION}" \
       org.opencontainers.image.source="${OCI_SOURCE}" \
       org.opencontainers.image.created="${OCI_CREATED}"
 
-ENV WARM_ALLIN1=${WARM_ALLIN1}
+ENV HF_HOME=/opt/hf-cache
+ENV TRANSFORMERS_CACHE=/opt/hf-cache
+ENV TORCH_HOME=/opt/torch-cache
+ENV HF_HUB_DISABLE_XET=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --no-cache-dir huggingface_hub==0.34.4
+
+COPY third_party/wd14-tagger-standalone/scripts/fetch-hf-assets.sh /usr/local/bin/fetch-wd14-assets
+RUN chmod +x /usr/local/bin/fetch-wd14-assets
+
+RUN mkdir -p /opt/wd14-models /opt/hf-cache /opt/torch-cache/hub/checkpoints
 
 RUN if [ "$BAKE_WD14_ASSETS" = "1" ]; then /bin/sh /usr/local/bin/fetch-wd14-assets /opt/wd14-models/wd14-convnextv2.v1; fi
-RUN if [ "$WARM_MODELS" = "1" ]; then /usr/local/bin/warm-models; fi
 
+RUN if [ "$FETCH_SIGLIP_ASSETS" = "1" ]; then python3 - <<'PY'; fi
+from huggingface_hub import snapshot_download
+snapshot_download(
+    repo_id="google/siglip2-base-patch16-naflex",
+    cache_dir="/opt/hf-cache",
+    allow_patterns=[
+        "config.json",
+        "model.safetensors",
+        "preprocessor_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer.model",
+        "tokenizer_config.json",
+    ],
+)
+PY
+
+RUN if [ "$FETCH_ALLIN1_ASSETS" = "1" ]; then curl -L "$ALLIN1_DEMUCS_URL" -o /opt/torch-cache/hub/checkpoints/955717e8-8726e21a.th; fi
