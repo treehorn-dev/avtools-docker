@@ -30,7 +30,7 @@ build-gpu:
 	docker build -f Dockerfile.utils-gpu --build-arg BAKE_WD14_ASSETS=0 --build-arg WARM_MODELS=0 -t $(IMAGE_GPU) .
 
 build-gpu-warm:
-	docker build -f Dockerfile.utils-gpu-warm --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_GPU) --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 -t $(IMAGE_GPU_WARM) .
+	docker build -f Dockerfile.utils-gpu-warm --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_GPU) --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 --build-arg WARM_ALLIN1=0 -t $(IMAGE_GPU_WARM) .
 
 build-ffmpeg-onnx:
 	docker build -t ffmpeg-onnx:cpu third_party/ffmpeg-onnx

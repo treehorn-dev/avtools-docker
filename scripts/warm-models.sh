@@ -12,7 +12,9 @@ ffmpeg -loglevel error -y \
   -c:a pcm_s16le \
   "$tmpdir/warm.wav"
 
-python3 -m allin1.cli "$tmpdir/warm.wav" --out-dir "$tmpdir/allin1"
+if [ "${WARM_ALLIN1:-1}" = "1" ]; then
+  python3 -m allin1.cli "$tmpdir/warm.wav" --out-dir "$tmpdir/allin1"
+fi
 
 ffmpeg -loglevel error -y \
   -f lavfi -i "color=c=gray:size=256x256:duration=1" \

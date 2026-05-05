@@ -91,7 +91,7 @@ def test_makefile_exposes_build_test_and_smoke_targets() -> None:
     assert 'docker build -f Dockerfile.utils-cpu --build-arg BAKE_WD14_ASSETS=0 --build-arg WARM_MODELS=0 -t $(IMAGE_CPU) .' in text
     assert 'docker build -f Dockerfile.utils-cpu-warm --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_CPU) --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 -t $(IMAGE_CPU_WARM) .' in text
     assert 'docker build -f Dockerfile.utils-gpu --build-arg BAKE_WD14_ASSETS=0 --build-arg WARM_MODELS=0 -t $(IMAGE_GPU) .' in text
-    assert 'docker build -f Dockerfile.utils-gpu-warm --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_GPU) --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 -t $(IMAGE_GPU_WARM) .' in text
+    assert 'docker build -f Dockerfile.utils-gpu-warm --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_GPU) --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 --build-arg WARM_ALLIN1=0 -t $(IMAGE_GPU_WARM) .' in text
     assert 'docker build -t ffmpeg-onnx:cpu third_party/ffmpeg-onnx' in text
     assert 'docker build -t ffmpeg-onnx-base third_party/ffmpeg-onnx' in text
     assert 'bash ./scripts/fetch-release-assets.sh nudenet-assets-v1' in text
@@ -138,6 +138,8 @@ def test_warm_dockerfiles_layer_from_cool_images() -> None:
     assert '/usr/local/bin/warm-models' in cpu_text
     assert 'ARG AVTOOLS_BASE_IMAGE=avtools-utils:gpu' in gpu_text
     assert 'FROM ${AVTOOLS_BASE_IMAGE}' in gpu_text
+    assert 'ARG WARM_ALLIN1=0' in gpu_text
+    assert 'ENV WARM_ALLIN1=${WARM_ALLIN1}' in gpu_text
     assert '/usr/local/bin/fetch-wd14-assets' in gpu_text
     assert '/usr/local/bin/warm-models' in gpu_text
 
@@ -192,6 +194,7 @@ def test_warm_script_warms_allin1_and_siglip() -> None:
 
     assert 'export HF_HUB_DISABLE_XET=1' in text
     assert 'python3 -m allin1.cli' in text
+    assert 'if [ "${WARM_ALLIN1:-1}" = "1" ]; then' in text
     assert 'siglip2-embed' in text
     assert 'google/siglip2-base-patch16-naflex' in text
     assert 'warm.wav' in text
@@ -234,6 +237,7 @@ def test_woodpecker_builds_and_publishes_cpu_and_manual_gpu_variants() -> None:
     assert '- WARM_MODELS=0' in text
     assert '- BAKE_WD14_ASSETS=1' in text
     assert '- WARM_MODELS=1' in text
+    assert '- WARM_ALLIN1=0' in text
     assert 'treehorn-dev_ghcr_username' in text
     assert 'treehorn-dev_ghcr_token' in text
     assert 'build-args-from-env' not in text

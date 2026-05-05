@@ -259,6 +259,7 @@ steps:
         - OCI_CREATED=${CI_PIPELINE_CREATED}
         - BAKE_WD14_ASSETS=1
         - WARM_MODELS=1
+        - WARM_ALLIN1=0
     when:
       - path:
           - ".gitmodules"
