@@ -54,12 +54,13 @@ RUN ln -s /usr/lib/jellyfin-ffmpeg/ffmpeg /usr/local/bin/ffmpeg && \
     ln -s /usr/lib/jellyfin-ffmpeg/ffprobe /usr/local/bin/ffprobe
 
 COPY requirements/utils-cpu.txt /tmp/utils-cpu.txt
+COPY requirements/utils-gpu-constraints.txt /tmp/utils-gpu-constraints.txt
 RUN pip3 install --upgrade pip setuptools wheel
 RUN pip3 install --no-cache-dir \
     --index-url https://download.pytorch.org/whl/cu124 \
     torch==2.5.0 torchvision==0.20.0 torchaudio==2.5.0
 RUN pip3 install --no-cache-dir cython
-RUN pip3 install --no-cache-dir -r /tmp/utils-cpu.txt
+RUN pip3 install --no-cache-dir -c /tmp/utils-gpu-constraints.txt -r /tmp/utils-cpu.txt
 RUN pip3 install --no-cache-dir git+${MADMOM_REPO}@${MADMOM_REF}
 RUN pip3 install --no-cache-dir natten==0.17.5+torch250cu124 -f https://whl.natten.org
 RUN pip3 install --no-cache-dir numpy opencv-python-headless==4.10.0.84 openvino

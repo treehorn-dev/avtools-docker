@@ -14,6 +14,7 @@ def test_repo_has_initial_cpu_layout() -> None:
     assert Path('.gitmodules').exists()
     assert Path('pyproject.toml').exists()
     assert Path('requirements/utils-cpu.txt').exists()
+    assert Path('requirements/utils-gpu-constraints.txt').exists()
     assert Path('scripts/smoke-cpu.sh').exists()
     assert Path('scripts/siglip2_embed.py').exists()
     assert Path('scripts/warm-models.sh').exists()
@@ -153,6 +154,8 @@ def test_gpu_dockerfile_redeclares_jellyfin_version_after_from() -> None:
     assert 'torch==2.5.0 torchvision==0.20.0 torchaudio==2.5.0' in text
     assert 'torch==2.5.0 torchvision==0.20.0 torchaudio==2.5.0 cython' not in text
     assert 'RUN pip3 install --no-cache-dir cython' in text
+    assert 'COPY requirements/utils-gpu-constraints.txt /tmp/utils-gpu-constraints.txt' in text
+    assert 'RUN pip3 install --no-cache-dir -c /tmp/utils-gpu-constraints.txt -r /tmp/utils-cpu.txt' in text
     assert 'natten==0.17.5+torch250cu124 -f https://whl.natten.org' in text
     assert 'python3 -c "import torch; assert torch.__version__ == \\"2.5.0+cu124\\"' in text
 
