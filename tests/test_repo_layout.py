@@ -142,6 +142,10 @@ def test_gpu_dockerfile_redeclares_jellyfin_version_after_from() -> None:
 
     assert 'ARG JELLYFIN_FFMPEG_VERSION=7.1.3-6\nFROM ${CUDA_BASE_IMAGE}' in text
     assert 'FROM ${CUDA_BASE_IMAGE}\n\nARG DEBIAN_FRONTEND=noninteractive\nARG TARGETARCH=amd64\nARG JELLYFIN_FFMPEG_VERSION=7.1.3-6' in text
+    assert '--index-url https://download.pytorch.org/whl/cu124' in text
+    assert 'torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1' in text
+    assert 'torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 cython' not in text
+    assert 'RUN pip3 install --no-cache-dir cython' in text
 
 
 def test_smoke_script_checks_composed_tooling() -> None:
