@@ -161,7 +161,7 @@ steps:
   publish-cpu-warm:
     image: woodpeckerci/plugin-kaniko
     depends_on:
-      - publish-ffmpeg-onnx-baked
+      - publish-cpu
     settings:
       repo: ghcr.io/treehorn-dev/avtools-utils
       registry: ghcr.io
