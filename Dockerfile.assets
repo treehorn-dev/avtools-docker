@@ -35,21 +35,20 @@ RUN mkdir -p /opt/wd14-models /opt/hf-cache /opt/torch-cache/hub/checkpoints
 
 RUN if [ "$BAKE_WD14_ASSETS" = "1" ]; then /bin/sh /usr/local/bin/fetch-wd14-assets /opt/wd14-models/wd14-convnextv2.v1; fi
 
-RUN if [ "$FETCH_SIGLIP_ASSETS" = "1" ]; then python3 - <<'PY'; fi
-from huggingface_hub import snapshot_download
-snapshot_download(
-    repo_id="google/siglip2-base-patch16-naflex",
-    cache_dir="/opt/hf-cache",
-    allow_patterns=[
-        "config.json",
-        "model.safetensors",
-        "preprocessor_config.json",
-        "special_tokens_map.json",
-        "tokenizer.json",
-        "tokenizer.model",
-        "tokenizer_config.json",
-    ],
-)
-PY
+RUN if [ "$FETCH_SIGLIP_ASSETS" = "1" ]; then python3 -c '\
+from huggingface_hub import snapshot_download; \
+snapshot_download( \
+    repo_id="google/siglip2-base-patch16-naflex", \
+    cache_dir="/opt/hf-cache", \
+    allow_patterns=[ \
+        "config.json", \
+        "model.safetensors", \
+        "preprocessor_config.json", \
+        "special_tokens_map.json", \
+        "tokenizer.json", \
+        "tokenizer.model", \
+        "tokenizer_config.json", \
+    ], \
+)'; fi
 
 RUN if [ "$FETCH_ALLIN1_ASSETS" = "1" ]; then curl -L "$ALLIN1_DEMUCS_URL" -o /opt/torch-cache/hub/checkpoints/955717e8-8726e21a.th; fi

@@ -149,6 +149,7 @@ def test_assets_and_warm_dockerfiles_use_copy_layers() -> None:
     assert 'ENV HF_HOME=/opt/hf-cache' in assets_text
     assert 'ENV TORCH_HOME=/opt/torch-cache' in assets_text
     assert '/usr/local/bin/fetch-wd14-assets' in assets_text
+    assert 'python3 -c' in assets_text
     assert 'snapshot_download(' in assets_text
     assert '955717e8-8726e21a.th' in assets_text
     assert 'ARG AVTOOLS_BASE_IMAGE=avtools-utils:cpu' in cpu_text
