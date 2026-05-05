@@ -16,7 +16,7 @@ This repo is intentionally narrow:
 
 ## Final Image
 
-`make build-cpu` builds the lean default CPU image. `make build-cpu-warm` builds the heavier warmed variant as a thin layer on top of `cpu`. `make build-gpu` and `make build-gpu-warm` define the parallel CUDA-oriented local builds, with `gpu-warm` layered on top of `gpu`. The CPU image contains:
+`make build-cpu` builds the lean default CPU image. `make build-assets-cpu` builds the dedicated asset layer for that image family. `make build-cpu-warm` then builds a thin warmed variant by copying those assets onto `cpu`. `make build-gpu`, `make build-assets-gpu`, and `make build-gpu-warm` define the parallel CUDA-oriented path, with `gpu-warm` copying from a GPU-specific assets image. The CPU image contains:
 - `allin1`
 - `siglip2-embed`
 - `transnetv2-cli`
@@ -24,10 +24,12 @@ This repo is intentionally narrow:
 - `wd14-tagger`
 - `transnetv2-cli` plus bundled `transnetv2pt` weights
 
-The warmed CPU image additionally contains:
+The dedicated assets image family currently bakes:
 - `wd14-tagger` default ConvNeXTV2 model baked from Hugging Face
-- warmed `allin1` caches
-- warmed SigLIP2 caches
+- SigLIP2 Hugging Face cache tree
+- `allin1`/demucs torch cache tree for CPU
+
+The warmed CPU image additionally contains those copied assets without rerunning inference during the warm build.
 
 The component-specific build targets remain available for isolated verification and debugging.
 
@@ -75,23 +77,31 @@ make test
 
 ```bash
 make build-cpu
+make build-assets-cpu
 make build-cpu-warm
 make build-gpu
+make build-assets-gpu
 make build-gpu-warm
 ```
 
 ## CI Publish Tags
 
-Woodpecker currently publishes only the CPU variants to GHCR:
+Woodpecker publishes these GHCR package families:
 
 - `ghcr.io/treehorn-dev/avtools-utils:cpu`
 - `ghcr.io/treehorn-dev/avtools-utils:cpu-latest`
+- `ghcr.io/treehorn-dev/avtools-assets:cpu`
+- `ghcr.io/treehorn-dev/avtools-assets:cpu-latest`
 - `ghcr.io/treehorn-dev/avtools-utils:cpu-warm`
 - `ghcr.io/treehorn-dev/avtools-utils:cpu-warm-latest`
+- `ghcr.io/treehorn-dev/avtools-utils:gpu`
+- `ghcr.io/treehorn-dev/avtools-utils:gpu-latest`
+- `ghcr.io/treehorn-dev/avtools-assets:gpu`
+- `ghcr.io/treehorn-dev/avtools-assets:gpu-latest`
+- `ghcr.io/treehorn-dev/avtools-utils:gpu-warm`
+- `ghcr.io/treehorn-dev/avtools-utils:gpu-warm-latest`
 
-There is intentionally no bare `latest` tag.
-
-The GPU variants are local scaffolding for now and are intentionally not in CI yet.
+There is intentionally no bare `latest` tag. All package families also publish `-<7charsha>` tags.
 
 ## Smoke Test
 
@@ -134,11 +144,11 @@ siglip2-embed \
 
 By default it uses `google/siglip2-base-patch16-naflex` on `cpu`.
 
-The warmed CPU image build runs a tiny warm-cache step during packaging:
-- a synthetic `wav` through `allin1`
+The asset image build runs the tiny warm-cache step during packaging:
+- a synthetic `wav` through `allin1` on CPU-capable asset builds
 - a synthetic `jpg` through `siglip2-embed`
 
-That forces the heavy first-run assets into the image instead of making the first real invocation pay the setup cost. The cool image skips that step.
+That forces the heavy first-run assets into a dedicated layer instead of making the warm image discover them at the end of a long build. GPU asset builds currently skip `allin1` warm-up in CI because the runner does not expose an NVIDIA driver.
 
 ## Planned Next Steps
 

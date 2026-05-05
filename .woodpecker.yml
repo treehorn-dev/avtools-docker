@@ -30,6 +30,7 @@ steps:
       - path:
           - ".gitmodules"
           - ".woodpecker.yml"
+          - "Dockerfile.assets"
           - "Dockerfile.utils-cpu"
           - "Dockerfile.utils-cpu-warm"
           - "Dockerfile.utils-gpu"
@@ -55,6 +56,7 @@ steps:
       - path:
           - ".gitmodules"
           - ".woodpecker.yml"
+          - "Dockerfile.assets"
           - "Dockerfile.utils-cpu"
           - "Dockerfile.utils-cpu-warm"
           - "third_party/ffmpeg-onnx/**"
@@ -85,6 +87,7 @@ steps:
       - path:
           - ".gitmodules"
           - ".woodpecker.yml"
+          - "Dockerfile.assets"
           - "Dockerfile.utils-cpu"
           - "Dockerfile.utils-cpu-warm"
           - "third_party/ffmpeg-onnx/**"
@@ -112,7 +115,7 @@ steps:
         - baked-latest
         - baked-${CI_COMMIT_SHA:0:7}
       build_args:
-        - FFMPEG_ONNX_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:base
+        - FFMPEG_ONNX_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:base-${CI_COMMIT_SHA:0:7}
     when:
       - path:
           - ".gitmodules"
@@ -144,7 +147,7 @@ steps:
         - cpu-latest
         - cpu-${CI_COMMIT_SHA:0:7}
       build_args:
-        - FFMPEG_ONNX_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:baked
+        - FFMPEG_ONNX_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:baked-${CI_COMMIT_SHA:0:7}
         - OCI_REVISION=${CI_COMMIT_SHA:0:7}
         - OCI_CREATED=${CI_PIPELINE_CREATED}
         - BAKE_WD14_ASSETS=0
@@ -163,10 +166,49 @@ steps:
           - "third_party/**"
       - event: manual
 
-  publish-cpu-warm:
+  publish-assets-cpu:
     image: woodpeckerci/plugin-kaniko
     depends_on:
       - publish-cpu
+    settings:
+      repo: ghcr.io/treehorn-dev/avtools-assets
+      registry: ghcr.io
+      context: .
+      dockerfile: Dockerfile.assets
+      username:
+        from_secret: treehorn-dev_ghcr_username
+      password:
+        from_secret: treehorn-dev_ghcr_token
+      tags:
+        - cpu
+        - cpu-latest
+        - cpu-${CI_COMMIT_SHA:0:7}
+      build_args:
+        - AVTOOLS_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:cpu-${CI_COMMIT_SHA:0:7}
+        - OCI_REVISION=${CI_COMMIT_SHA:0:7}
+        - OCI_CREATED=${CI_PIPELINE_CREATED}
+        - BAKE_WD14_ASSETS=1
+        - WARM_MODELS=1
+        - WARM_ALLIN1=1
+    when:
+      - path:
+          - ".gitmodules"
+          - ".woodpecker.yml"
+          - "Dockerfile.assets"
+          - "Dockerfile.utils-cpu"
+          - "Dockerfile.utils-cpu-warm"
+          - "Makefile"
+          - "pyproject.toml"
+          - "requirements/**"
+          - "scripts/**"
+          - "tests/**"
+          - "third_party/**"
+      - event: manual
+
+  publish-cpu-warm:
+    image: woodpeckerci/plugin-kaniko
+    depends_on:
+      - publish-assets-cpu
     settings:
       repo: ghcr.io/treehorn-dev/avtools-utils
       registry: ghcr.io
@@ -181,15 +223,15 @@ steps:
         - cpu-warm-latest
         - cpu-warm-${CI_COMMIT_SHA:0:7}
       build_args:
-        - AVTOOLS_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:cpu
+        - AVTOOLS_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:cpu-${CI_COMMIT_SHA:0:7}
+        - AVTOOLS_ASSETS_IMAGE=ghcr.io/treehorn-dev/avtools-assets:cpu-${CI_COMMIT_SHA:0:7}
         - OCI_REVISION=${CI_COMMIT_SHA:0:7}
         - OCI_CREATED=${CI_PIPELINE_CREATED}
-        - BAKE_WD14_ASSETS=1
-        - WARM_MODELS=1
     when:
       - path:
           - ".gitmodules"
           - ".woodpecker.yml"
+          - "Dockerfile.assets"
           - "Dockerfile.utils-cpu"
           - "Dockerfile.utils-cpu-warm"
           - "Makefile"
@@ -236,10 +278,49 @@ steps:
           - "third_party/**"
       - event: manual
 
-  publish-gpu-warm:
+  publish-assets-gpu:
     image: woodpeckerci/plugin-kaniko
     depends_on:
       - publish-gpu
+    settings:
+      repo: ghcr.io/treehorn-dev/avtools-assets
+      registry: ghcr.io
+      context: .
+      dockerfile: Dockerfile.assets
+      username:
+        from_secret: treehorn-dev_ghcr_username
+      password:
+        from_secret: treehorn-dev_ghcr_token
+      tags:
+        - gpu
+        - gpu-latest
+        - gpu-${CI_COMMIT_SHA:0:7}
+      build_args:
+        - AVTOOLS_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:gpu-${CI_COMMIT_SHA:0:7}
+        - OCI_REVISION=${CI_COMMIT_SHA:0:7}
+        - OCI_CREATED=${CI_PIPELINE_CREATED}
+        - BAKE_WD14_ASSETS=1
+        - WARM_MODELS=1
+        - WARM_ALLIN1=0
+    when:
+      - path:
+          - ".gitmodules"
+          - ".woodpecker.yml"
+          - "Dockerfile.assets"
+          - "Dockerfile.utils-gpu"
+          - "Dockerfile.utils-gpu-warm"
+          - "Makefile"
+          - "pyproject.toml"
+          - "requirements/**"
+          - "scripts/**"
+          - "tests/**"
+          - "third_party/**"
+      - event: manual
+
+  publish-gpu-warm:
+    image: woodpeckerci/plugin-kaniko
+    depends_on:
+      - publish-assets-gpu
     settings:
       repo: ghcr.io/treehorn-dev/avtools-utils
       registry: ghcr.io
@@ -254,16 +335,15 @@ steps:
         - gpu-warm-latest
         - gpu-warm-${CI_COMMIT_SHA:0:7}
       build_args:
-        - AVTOOLS_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:gpu
+        - AVTOOLS_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:gpu-${CI_COMMIT_SHA:0:7}
+        - AVTOOLS_ASSETS_IMAGE=ghcr.io/treehorn-dev/avtools-assets:gpu-${CI_COMMIT_SHA:0:7}
         - OCI_REVISION=${CI_COMMIT_SHA:0:7}
         - OCI_CREATED=${CI_PIPELINE_CREATED}
-        - BAKE_WD14_ASSETS=1
-        - WARM_MODELS=1
-        - WARM_ALLIN1=0
     when:
       - path:
           - ".gitmodules"
           - ".woodpecker.yml"
+          - "Dockerfile.assets"
           - "Dockerfile.utils-gpu"
           - "Dockerfile.utils-gpu-warm"
           - "Makefile"

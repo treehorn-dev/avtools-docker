@@ -1,14 +1,19 @@
 ARG AVTOOLS_BASE_IMAGE=avtools-utils:cpu
-ARG AVTOOLS_ASSETS_IMAGE=avtools-assets:cpu
 FROM ${AVTOOLS_BASE_IMAGE}
 
 ARG OCI_REVISION=unknown
 ARG OCI_SOURCE=https://github.com/treehorn-dev/avtools-docker
 ARG OCI_CREATED=unknown
+ARG BAKE_WD14_ASSETS=1
+ARG WARM_MODELS=1
+ARG WARM_ALLIN1=1
+
 LABEL org.opencontainers.image.revision="${OCI_REVISION}" \
       org.opencontainers.image.source="${OCI_SOURCE}" \
       org.opencontainers.image.created="${OCI_CREATED}"
 
-COPY --from=${AVTOOLS_ASSETS_IMAGE} /opt/hf-cache /opt/hf-cache
-COPY --from=${AVTOOLS_ASSETS_IMAGE} /opt/torch-cache /opt/torch-cache
-COPY --from=${AVTOOLS_ASSETS_IMAGE} /opt/wd14-models /opt/wd14-models
+ENV WARM_ALLIN1=${WARM_ALLIN1}
+
+RUN if [ "$BAKE_WD14_ASSETS" = "1" ]; then /bin/sh /usr/local/bin/fetch-wd14-assets /opt/wd14-models/wd14-convnextv2.v1; fi
+RUN if [ "$WARM_MODELS" = "1" ]; then /usr/local/bin/warm-models; fi
+

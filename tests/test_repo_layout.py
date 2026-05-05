@@ -4,6 +4,7 @@ from pathlib import Path
 
 
 def test_repo_has_initial_cpu_layout() -> None:
+    assert Path('Dockerfile.assets').exists()
     assert Path('Dockerfile.utils-cpu').exists()
     assert Path('Dockerfile.utils-cpu-warm').exists()
     assert Path('Dockerfile.utils-gpu').exists()
@@ -76,8 +77,10 @@ def test_makefile_exposes_build_test_and_smoke_targets() -> None:
     text = Path('Makefile').read_text()
 
     assert 'build-cpu:' in text
+    assert 'build-assets-cpu:' in text
     assert 'build-cpu-warm:' in text
     assert 'build-gpu:' in text
+    assert 'build-assets-gpu:' in text
     assert 'build-gpu-warm:' in text
     assert 'build-ffmpeg-onnx:' in text
     assert 'build-ffmpeg-onnx-base:' in text
@@ -89,9 +92,11 @@ def test_makefile_exposes_build_test_and_smoke_targets() -> None:
     assert 'smoke-cpu:' in text
     assert 'smoke-cpu-warm:' in text
     assert 'docker build -f Dockerfile.utils-cpu --build-arg BAKE_WD14_ASSETS=0 --build-arg WARM_MODELS=0 -t $(IMAGE_CPU) .' in text
-    assert 'docker build -f Dockerfile.utils-cpu-warm --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_CPU) --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 -t $(IMAGE_CPU_WARM) .' in text
+    assert 'docker build -f Dockerfile.assets --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_CPU) --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 --build-arg WARM_ALLIN1=1 -t $(IMAGE_ASSETS_CPU) .' in text
+    assert 'docker build -f Dockerfile.utils-cpu-warm --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_CPU) --build-arg AVTOOLS_ASSETS_IMAGE=$(IMAGE_ASSETS_CPU) -t $(IMAGE_CPU_WARM) .' in text
     assert 'docker build -f Dockerfile.utils-gpu --build-arg BAKE_WD14_ASSETS=0 --build-arg WARM_MODELS=0 -t $(IMAGE_GPU) .' in text
-    assert 'docker build -f Dockerfile.utils-gpu-warm --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_GPU) --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 --build-arg WARM_ALLIN1=0 -t $(IMAGE_GPU_WARM) .' in text
+    assert 'docker build -f Dockerfile.assets --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_GPU) --build-arg BAKE_WD14_ASSETS=1 --build-arg WARM_MODELS=1 --build-arg WARM_ALLIN1=0 -t $(IMAGE_ASSETS_GPU) .' in text
+    assert 'docker build -f Dockerfile.utils-gpu-warm --build-arg AVTOOLS_BASE_IMAGE=$(IMAGE_GPU) --build-arg AVTOOLS_ASSETS_IMAGE=$(IMAGE_ASSETS_GPU) -t $(IMAGE_GPU_WARM) .' in text
     assert 'docker build -t ffmpeg-onnx:cpu third_party/ffmpeg-onnx' in text
     assert 'docker build -t ffmpeg-onnx-base third_party/ffmpeg-onnx' in text
     assert 'bash ./scripts/fetch-release-assets.sh nudenet-assets-v1' in text
@@ -122,26 +127,37 @@ def test_readme_mentions_component_boundaries_and_final_image() -> None:
     assert 'make build-wd14-cpu' in text
     assert 'make build-transnetv2-cpu' in text
     assert 'make build-cpu' in text
+    assert 'make build-assets-cpu' in text
     assert 'make build-cpu-warm' in text
     assert 'make build-gpu' in text
+    assert 'make build-assets-gpu' in text
     assert 'make build-gpu-warm' in text
-    assert 'The warmed CPU image additionally contains' in text
+    assert 'The dedicated assets image family currently bakes' in text
 
 
-def test_warm_dockerfiles_layer_from_cool_images() -> None:
+def test_assets_and_warm_dockerfiles_use_copy_layers() -> None:
+    assets_text = Path('Dockerfile.assets').read_text()
     cpu_text = Path('Dockerfile.utils-cpu-warm').read_text()
     gpu_text = Path('Dockerfile.utils-gpu-warm').read_text()
 
+    assert 'ARG AVTOOLS_BASE_IMAGE=avtools-utils:cpu' in assets_text
+    assert 'FROM ${AVTOOLS_BASE_IMAGE}' in assets_text
+    assert 'ARG WARM_ALLIN1=1' in assets_text
+    assert 'ENV WARM_ALLIN1=${WARM_ALLIN1}' in assets_text
+    assert '/usr/local/bin/fetch-wd14-assets' in assets_text
+    assert '/usr/local/bin/warm-models' in assets_text
     assert 'ARG AVTOOLS_BASE_IMAGE=avtools-utils:cpu' in cpu_text
+    assert 'ARG AVTOOLS_ASSETS_IMAGE=avtools-assets:cpu' in cpu_text
     assert 'FROM ${AVTOOLS_BASE_IMAGE}' in cpu_text
-    assert '/usr/local/bin/fetch-wd14-assets' in cpu_text
-    assert '/usr/local/bin/warm-models' in cpu_text
+    assert 'COPY --from=${AVTOOLS_ASSETS_IMAGE} /opt/hf-cache /opt/hf-cache' in cpu_text
+    assert 'COPY --from=${AVTOOLS_ASSETS_IMAGE} /opt/torch-cache /opt/torch-cache' in cpu_text
+    assert 'COPY --from=${AVTOOLS_ASSETS_IMAGE} /opt/wd14-models /opt/wd14-models' in cpu_text
     assert 'ARG AVTOOLS_BASE_IMAGE=avtools-utils:gpu' in gpu_text
+    assert 'ARG AVTOOLS_ASSETS_IMAGE=avtools-assets:gpu' in gpu_text
     assert 'FROM ${AVTOOLS_BASE_IMAGE}' in gpu_text
-    assert 'ARG WARM_ALLIN1=0' in gpu_text
-    assert 'ENV WARM_ALLIN1=${WARM_ALLIN1}' in gpu_text
-    assert '/usr/local/bin/fetch-wd14-assets' in gpu_text
-    assert '/usr/local/bin/warm-models' in gpu_text
+    assert 'COPY --from=${AVTOOLS_ASSETS_IMAGE} /opt/hf-cache /opt/hf-cache' in gpu_text
+    assert 'COPY --from=${AVTOOLS_ASSETS_IMAGE} /opt/torch-cache /opt/torch-cache' in gpu_text
+    assert 'COPY --from=${AVTOOLS_ASSETS_IMAGE} /opt/wd14-models /opt/wd14-models' in gpu_text
 
 
 def test_gpu_dockerfile_redeclares_jellyfin_version_after_from() -> None:
@@ -207,7 +223,7 @@ def test_siglip_embed_uses_slow_processor_path() -> None:
     assert "AutoProcessor.from_pretrained(model_name, use_fast=False)" in text
 
 
-def test_woodpecker_builds_and_publishes_cpu_and_manual_gpu_variants() -> None:
+def test_woodpecker_builds_and_publishes_runtime_and_asset_variants() -> None:
     text = Path('.woodpecker.yml').read_text()
 
     assert 'woodpeckerci/plugin-git' in text
@@ -221,23 +237,32 @@ def test_woodpecker_builds_and_publishes_cpu_and_manual_gpu_variants() -> None:
     assert 'ghcr.io/treehorn-dev/ffmpeg-onnx' in text
     assert 'third_party/ffmpeg-onnx/Dockerfile.baked' in text
     assert 'build_args:' in text
-    assert '- FFMPEG_ONNX_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:base' in text
-    assert '- FFMPEG_ONNX_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:baked' in text
+    assert '- FFMPEG_ONNX_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:base-${CI_COMMIT_SHA:0:7}' in text
+    assert '- FFMPEG_ONNX_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:baked-${CI_COMMIT_SHA:0:7}' in text
     assert 'publish-cpu:' in text
+    assert 'publish-assets-cpu:' in text
     assert 'publish-cpu-warm:' in text
-    assert 'depends_on:\n      - publish-cpu' in text
+    assert 'depends_on:\n      - publish-assets-cpu' in text
     assert 'dockerfile: Dockerfile.utils-cpu-warm' in text
     assert 'publish-gpu:' in text
+    assert 'publish-assets-gpu:' in text
     assert 'publish-gpu-warm:' in text
-    assert 'depends_on:\n      - publish-gpu' in text
+    assert 'depends_on:\n      - publish-assets-gpu' in text
+    assert 'dockerfile: Dockerfile.assets' in text
     assert 'dockerfile: Dockerfile.utils-gpu' in text
     assert 'dockerfile: Dockerfile.utils-gpu-warm' in text
     assert 'ghcr.io/treehorn-dev/avtools-utils' in text
+    assert 'ghcr.io/treehorn-dev/avtools-assets' in text
     assert '- BAKE_WD14_ASSETS=0' in text
     assert '- WARM_MODELS=0' in text
     assert '- BAKE_WD14_ASSETS=1' in text
     assert '- WARM_MODELS=1' in text
     assert '- WARM_ALLIN1=0' in text
+    assert '- WARM_ALLIN1=1' in text
+    assert '- AVTOOLS_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:cpu-${CI_COMMIT_SHA:0:7}' in text
+    assert '- AVTOOLS_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:gpu-${CI_COMMIT_SHA:0:7}' in text
+    assert '- AVTOOLS_ASSETS_IMAGE=ghcr.io/treehorn-dev/avtools-assets:cpu-${CI_COMMIT_SHA:0:7}' in text
+    assert '- AVTOOLS_ASSETS_IMAGE=ghcr.io/treehorn-dev/avtools-assets:gpu-${CI_COMMIT_SHA:0:7}' in text
     assert 'treehorn-dev_ghcr_username' in text
     assert 'treehorn-dev_ghcr_token' in text
     assert 'build-args-from-env' not in text
@@ -248,15 +273,17 @@ def test_woodpecker_builds_and_publishes_cpu_and_manual_gpu_variants() -> None:
     assert '- cpu-warm' in text
     assert '- cpu-warm-latest' in text
     assert '- cpu-warm-${CI_COMMIT_SHA:0:7}' in text
-    assert 'Dockerfile.utils-cpu' in text
-    assert 'Dockerfile.utils-cpu-warm' in text
     assert '- gpu' in text
     assert '- gpu-latest' in text
     assert '- gpu-${CI_COMMIT_SHA:0:7}' in text
+    assert 'Dockerfile.utils-cpu' in text
+    assert 'Dockerfile.utils-cpu-warm' in text
     assert '- gpu-warm' in text
     assert '- gpu-warm-latest' in text
     assert '- gpu-warm-${CI_COMMIT_SHA:0:7}' in text
     assert '- base-${CI_COMMIT_SHA:0:7}' in text
     assert '- baked-${CI_COMMIT_SHA:0:7}' in text
+    assert '- cpu-warm-${CI_COMMIT_SHA:0:7}' in text
+    assert '- gpu-warm-${CI_COMMIT_SHA:0:7}' in text
     assert '- OCI_REVISION=${CI_COMMIT_SHA:0:7}' in text
     assert '- OCI_CREATED=${CI_PIPELINE_CREATED}' in text
