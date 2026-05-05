@@ -27,6 +27,10 @@ def test_cpu_dockerfile_uses_ffmpeg_onnx_base_and_composes_component_tools() -> 
 
     assert 'ARG FFMPEG_ONNX_BASE_IMAGE=ffmpeg-onnx:baked' in text
     assert 'FROM ${FFMPEG_ONNX_BASE_IMAGE}' in text
+    assert 'ARG OCI_REVISION=unknown' in text
+    assert 'ARG OCI_SOURCE=https://github.com/treehorn-dev/avtools-docker' in text
+    assert 'ARG OCI_CREATED=unknown' in text
+    assert 'org.opencontainers.image.revision="${OCI_REVISION}"' in text
     assert 'python3.10-dev' in text
     assert 'python-is-python3' in text
     assert 'python3.10-venv' in text
@@ -142,11 +146,15 @@ def test_gpu_dockerfile_redeclares_jellyfin_version_after_from() -> None:
 
     assert 'ARG JELLYFIN_FFMPEG_VERSION=7.1.3-6\nFROM ${CUDA_BASE_IMAGE}' in text
     assert 'FROM ${CUDA_BASE_IMAGE}\n\nARG DEBIAN_FRONTEND=noninteractive\nARG TARGETARCH=amd64\nARG JELLYFIN_FFMPEG_VERSION=7.1.3-6' in text
+    assert 'ARG OCI_REVISION=unknown' in text
+    assert 'ARG OCI_SOURCE=https://github.com/treehorn-dev/avtools-docker' in text
+    assert 'org.opencontainers.image.revision="${OCI_REVISION}"' in text
     assert '--index-url https://download.pytorch.org/whl/cu124' in text
     assert 'torch==2.5.0 torchvision==0.20.0 torchaudio==2.5.0' in text
     assert 'torch==2.5.0 torchvision==0.20.0 torchaudio==2.5.0 cython' not in text
     assert 'RUN pip3 install --no-cache-dir cython' in text
     assert 'natten==0.17.5+torch250cu124 -f https://whl.natten.org' in text
+    assert 'python3 -c "import torch; assert torch.__version__ == \\"2.5.0+cu124\\"' in text
 
 
 def test_smoke_script_checks_composed_tooling() -> None:
@@ -226,11 +234,19 @@ def test_woodpecker_builds_and_publishes_cpu_and_manual_gpu_variants() -> None:
     assert '\n    environment:\n' not in text
     assert '- cpu' in text
     assert '- cpu-latest' in text
+    assert '- cpu-${CI_COMMIT_SHA:0:7}' in text
     assert '- cpu-warm' in text
     assert '- cpu-warm-latest' in text
+    assert '- cpu-warm-${CI_COMMIT_SHA:0:7}' in text
     assert 'Dockerfile.utils-cpu' in text
     assert 'Dockerfile.utils-cpu-warm' in text
     assert '- gpu' in text
     assert '- gpu-latest' in text
+    assert '- gpu-${CI_COMMIT_SHA:0:7}' in text
     assert '- gpu-warm' in text
     assert '- gpu-warm-latest' in text
+    assert '- gpu-warm-${CI_COMMIT_SHA:0:7}' in text
+    assert '- base-${CI_COMMIT_SHA:0:7}' in text
+    assert '- baked-${CI_COMMIT_SHA:0:7}' in text
+    assert '- OCI_REVISION=${CI_COMMIT_SHA:0:7}' in text
+    assert '- OCI_CREATED=${CI_PIPELINE_CREATED}' in text

@@ -2,6 +2,9 @@ ARG FFMPEG_ONNX_BASE_IMAGE=ffmpeg-onnx:baked
 FROM ${FFMPEG_ONNX_BASE_IMAGE}
 
 ARG DEBIAN_FRONTEND=noninteractive
+ARG OCI_REVISION=unknown
+ARG OCI_SOURCE=https://github.com/treehorn-dev/avtools-docker
+ARG OCI_CREATED=unknown
 ARG ALLIN1_REPO=https://github.com/docker-audio-tools/all-in-one-docker-cpu-apple-silicon.git
 ARG ALLIN1_REF=main
 ARG MADMOM_REPO=https://github.com/CPJKU/madmom
@@ -12,6 +15,9 @@ ARG WARM_MODELS=0
 ENV HF_HOME=/opt/hf-cache
 ENV TRANSFORMERS_CACHE=/opt/hf-cache
 ENV TORCH_HOME=/opt/torch-cache
+LABEL org.opencontainers.image.revision="${OCI_REVISION}" \
+      org.opencontainers.image.source="${OCI_SOURCE}" \
+      org.opencontainers.image.created="${OCI_CREATED}"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cmake \
