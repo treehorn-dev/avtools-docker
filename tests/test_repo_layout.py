@@ -137,6 +137,13 @@ def test_warm_dockerfiles_layer_from_cool_images() -> None:
     assert '/usr/local/bin/warm-models' in gpu_text
 
 
+def test_gpu_dockerfile_redeclares_jellyfin_version_after_from() -> None:
+    text = Path('Dockerfile.utils-gpu').read_text()
+
+    assert 'ARG JELLYFIN_FFMPEG_VERSION=7.1.3-6\nFROM ${CUDA_BASE_IMAGE}' in text
+    assert 'FROM ${CUDA_BASE_IMAGE}\n\nARG DEBIAN_FRONTEND=noninteractive\nARG TARGETARCH=amd64\nARG JELLYFIN_FFMPEG_VERSION=7.1.3-6' in text
+
+
 def test_smoke_script_checks_composed_tooling() -> None:
     text = Path('scripts/smoke-cpu.sh').read_text()
 
