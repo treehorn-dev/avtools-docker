@@ -172,6 +172,7 @@ def test_gpu_dockerfile_redeclares_jellyfin_version_after_from() -> None:
     text = Path('Dockerfile.utils-gpu').read_text()
     constraints = Path('requirements/utils-gpu-constraints.txt').read_text()
 
+    assert 'ARG CUDA_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:gpu-latest' in text
     assert 'ARG JELLYFIN_FFMPEG_VERSION=7.1.3-6\nFROM ${CUDA_BASE_IMAGE}' in text
     assert 'FROM ${CUDA_BASE_IMAGE}\n\nARG DEBIAN_FRONTEND=noninteractive\nARG TARGETARCH=amd64\nARG JELLYFIN_FFMPEG_VERSION=7.1.3-6' in text
     assert 'ARG OCI_REVISION=unknown' in text
@@ -186,6 +187,10 @@ def test_gpu_dockerfile_redeclares_jellyfin_version_after_from() -> None:
     assert 'RUN pip3 install --no-cache-dir -c /tmp/utils-gpu-constraints.txt -r /tmp/utils-cpu.txt' in text
     assert 'sympy==1.13.1' in constraints
     assert 'natten==0.17.5+torch250cu124 -f https://whl.natten.org' in text
+    assert 'ln -sf /usr/lib/jellyfin-ffmpeg/ffmpeg /usr/local/bin/ffmpeg' in text
+    assert 'ln -sf /usr/lib/jellyfin-ffmpeg/ffprobe /usr/local/bin/ffprobe' in text
+    assert 'rm -rf /opt/wd14-venv && \\' in text
+    assert 'rm -rf /opt/transnetv2-venv && \\' in text
     assert 'python3 -c "import torch; assert torch.__version__ == \\"2.5.0+cu124\\"' in text
 
 
@@ -267,6 +272,7 @@ def test_woodpecker_builds_and_publishes_runtime_and_asset_variants() -> None:
     assert '- BAKE_WD14_ASSETS=1' in text
     assert '- FETCH_SIGLIP_ASSETS=1' in text
     assert '- FETCH_ALLIN1_ASSETS=1' in text
+    assert '- CUDA_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:gpu-latest' in text
     assert '- PYTHON_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:baked-${CI_COMMIT_SHA:0:7}' in text
     assert '- AVTOOLS_ASSETS_IMAGE=ghcr.io/treehorn-dev/avtools-assets:cpu-${CI_COMMIT_SHA:0:7}' in text
     assert '- AVTOOLS_ASSETS_IMAGE=ghcr.io/treehorn-dev/avtools-assets:gpu-${CI_COMMIT_SHA:0:7}' in text

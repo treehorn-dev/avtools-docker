@@ -1,4 +1,4 @@
-ARG CUDA_BASE_IMAGE=nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+ARG CUDA_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:gpu-latest
 ARG JELLYFIN_FFMPEG_VERSION=7.1.3-6
 FROM ${CUDA_BASE_IMAGE}
 
@@ -50,8 +50,8 @@ RUN wget -O /tmp/jellyfin-ffmpeg7.deb \
     rm -f /tmp/jellyfin-ffmpeg7.deb && \
     rm -rf /var/lib/apt/lists/*
 
-RUN ln -s /usr/lib/jellyfin-ffmpeg/ffmpeg /usr/local/bin/ffmpeg && \
-    ln -s /usr/lib/jellyfin-ffmpeg/ffprobe /usr/local/bin/ffprobe
+RUN ln -sf /usr/lib/jellyfin-ffmpeg/ffmpeg /usr/local/bin/ffmpeg && \
+    ln -sf /usr/lib/jellyfin-ffmpeg/ffprobe /usr/local/bin/ffprobe
 
 COPY requirements/utils-cpu.txt /tmp/utils-cpu.txt
 COPY requirements/utils-gpu-constraints.txt /tmp/utils-gpu-constraints.txt
@@ -80,6 +80,7 @@ RUN chmod +x /usr/local/bin/ffmpeg-onnx /usr/local/bin/siglip2-embed /usr/local/
 
 COPY third_party/wd14-tagger-standalone /tmp/wd14-tagger-standalone
 RUN sed -i 's/requires-python = ">=3.11"/requires-python = ">=3.10"/' /tmp/wd14-tagger-standalone/pyproject.toml && \
+    rm -rf /opt/wd14-venv && \
     python3 -m venv /opt/wd14-venv --system-site-packages && \
     /opt/wd14-venv/bin/pip install --upgrade pip setuptools wheel && \
     /opt/wd14-venv/bin/pip install --no-cache-dir /tmp/wd14-tagger-standalone && \
@@ -89,6 +90,7 @@ RUN if [ "$BAKE_WD14_ASSETS" = "1" ]; then /bin/sh /usr/local/bin/fetch-wd14-ass
 
 COPY third_party/transnetv2-cli /tmp/transnetv2-cli
 RUN sed -i 's/requires-python = ">=3.11"/requires-python = ">=3.10"/' /tmp/transnetv2-cli/pyproject.toml && \
+    rm -rf /opt/transnetv2-venv && \
     python3 -m venv /opt/transnetv2-venv --system-site-packages && \
     /opt/transnetv2-venv/bin/pip install --upgrade pip setuptools wheel && \
     /opt/transnetv2-venv/bin/pip install --no-cache-dir future ffmpeg-python && \
