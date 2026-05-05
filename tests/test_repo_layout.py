@@ -177,7 +177,7 @@ def test_siglip_embed_uses_slow_processor_path() -> None:
     assert "AutoProcessor.from_pretrained(model_name, use_fast=False)" in text
 
 
-def test_woodpecker_builds_and_publishes_cpu_variants_only() -> None:
+def test_woodpecker_builds_and_publishes_cpu_and_manual_gpu_variants() -> None:
     text = Path('.woodpecker.yml').read_text()
 
     assert 'woodpeckerci/plugin-git' in text
@@ -197,6 +197,11 @@ def test_woodpecker_builds_and_publishes_cpu_variants_only() -> None:
     assert 'publish-cpu-warm:' in text
     assert 'depends_on:\n      - publish-cpu' in text
     assert 'dockerfile: Dockerfile.utils-cpu-warm' in text
+    assert 'publish-gpu:' in text
+    assert 'publish-gpu-warm:' in text
+    assert 'depends_on:\n      - publish-gpu' in text
+    assert 'dockerfile: Dockerfile.utils-gpu' in text
+    assert 'dockerfile: Dockerfile.utils-gpu-warm' in text
     assert 'ghcr.io/treehorn-dev/avtools-utils' in text
     assert '- BAKE_WD14_ASSETS=0' in text
     assert '- WARM_MODELS=0' in text
@@ -212,4 +217,7 @@ def test_woodpecker_builds_and_publishes_cpu_variants_only() -> None:
     assert '- cpu-warm-latest' in text
     assert 'Dockerfile.utils-cpu' in text
     assert 'Dockerfile.utils-cpu-warm' in text
-    assert ':gpu' not in text
+    assert '- gpu' in text
+    assert '- gpu-latest' in text
+    assert '- gpu-warm' in text
+    assert '- gpu-warm-latest' in text

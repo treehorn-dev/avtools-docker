@@ -191,3 +191,48 @@ steps:
           - "tests/**"
           - "third_party/**"
       - event: manual
+
+  publish-gpu:
+    image: woodpeckerci/plugin-kaniko
+    depends_on:
+      - publish-ffmpeg-onnx-baked
+    settings:
+      repo: ghcr.io/treehorn-dev/avtools-utils
+      registry: ghcr.io
+      context: .
+      dockerfile: Dockerfile.utils-gpu
+      username:
+        from_secret: treehorn-dev_ghcr_username
+      password:
+        from_secret: treehorn-dev_ghcr_token
+      tags:
+        - gpu
+        - gpu-latest
+      build_args:
+        - BAKE_WD14_ASSETS=0
+        - WARM_MODELS=0
+    when:
+      - event: manual
+
+  publish-gpu-warm:
+    image: woodpeckerci/plugin-kaniko
+    depends_on:
+      - publish-gpu
+    settings:
+      repo: ghcr.io/treehorn-dev/avtools-utils
+      registry: ghcr.io
+      context: .
+      dockerfile: Dockerfile.utils-gpu-warm
+      username:
+        from_secret: treehorn-dev_ghcr_username
+      password:
+        from_secret: treehorn-dev_ghcr_token
+      tags:
+        - gpu-warm
+        - gpu-warm-latest
+      build_args:
+        - AVTOOLS_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:gpu
+        - BAKE_WD14_ASSETS=1
+        - WARM_MODELS=1
+    when:
+      - event: manual
