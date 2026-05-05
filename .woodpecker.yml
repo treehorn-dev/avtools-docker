@@ -212,6 +212,17 @@ steps:
         - BAKE_WD14_ASSETS=0
         - WARM_MODELS=0
     when:
+      - path:
+          - ".gitmodules"
+          - ".woodpecker.yml"
+          - "Dockerfile.utils-gpu"
+          - "Dockerfile.utils-gpu-warm"
+          - "Makefile"
+          - "pyproject.toml"
+          - "requirements/**"
+          - "scripts/**"
+          - "tests/**"
+          - "third_party/**"
       - event: manual
 
   publish-gpu-warm:
@@ -235,4 +246,15 @@ steps:
         - BAKE_WD14_ASSETS=1
         - WARM_MODELS=1
     when:
+      - path:
+          - ".gitmodules"
+          - ".woodpecker.yml"
+          - "Dockerfile.utils-gpu"
+          - "Dockerfile.utils-gpu-warm"
+          - "Makefile"
+          - "pyproject.toml"
+          - "requirements/**"
+          - "scripts/**"
+          - "tests/**"
+          - "third_party/**"
       - event: manual
