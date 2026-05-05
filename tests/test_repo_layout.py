@@ -144,6 +144,7 @@ def test_warm_dockerfiles_layer_from_cool_images() -> None:
 
 def test_gpu_dockerfile_redeclares_jellyfin_version_after_from() -> None:
     text = Path('Dockerfile.utils-gpu').read_text()
+    constraints = Path('requirements/utils-gpu-constraints.txt').read_text()
 
     assert 'ARG JELLYFIN_FFMPEG_VERSION=7.1.3-6\nFROM ${CUDA_BASE_IMAGE}' in text
     assert 'FROM ${CUDA_BASE_IMAGE}\n\nARG DEBIAN_FRONTEND=noninteractive\nARG TARGETARCH=amd64\nARG JELLYFIN_FFMPEG_VERSION=7.1.3-6' in text
@@ -156,6 +157,7 @@ def test_gpu_dockerfile_redeclares_jellyfin_version_after_from() -> None:
     assert 'RUN pip3 install --no-cache-dir cython' in text
     assert 'COPY requirements/utils-gpu-constraints.txt /tmp/utils-gpu-constraints.txt' in text
     assert 'RUN pip3 install --no-cache-dir -c /tmp/utils-gpu-constraints.txt -r /tmp/utils-cpu.txt' in text
+    assert 'sympy==1.13.1' in constraints
     assert 'natten==0.17.5+torch250cu124 -f https://whl.natten.org' in text
     assert 'python3 -c "import torch; assert torch.__version__ == \\"2.5.0+cu124\\"' in text
 
