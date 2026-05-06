@@ -190,7 +190,9 @@ def test_gpu_dockerfile_redeclares_jellyfin_version_after_from() -> None:
     assert 'ln -sf /usr/lib/jellyfin-ffmpeg/ffmpeg /usr/local/bin/ffmpeg' in text
     assert 'ln -sf /usr/lib/jellyfin-ffmpeg/ffprobe /usr/local/bin/ffprobe' in text
     assert 'rm -rf /opt/wd14-venv && \\' in text
+    assert 'ln -sf /opt/wd14-venv/bin/wd14-tagger /usr/local/bin/wd14-tagger' in text
     assert 'rm -rf /opt/transnetv2-venv && \\' in text
+    assert 'ln -sf /opt/transnetv2-venv/bin/transnetv2-cli /usr/local/bin/transnetv2-cli' in text
     assert 'python3 -c "import torch; assert torch.__version__ == \\"2.5.0+cu124\\"' in text
 
 

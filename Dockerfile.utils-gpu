@@ -84,7 +84,7 @@ RUN sed -i 's/requires-python = ">=3.11"/requires-python = ">=3.10"/' /tmp/wd14-
     python3 -m venv /opt/wd14-venv --system-site-packages && \
     /opt/wd14-venv/bin/pip install --upgrade pip setuptools wheel && \
     /opt/wd14-venv/bin/pip install --no-cache-dir /tmp/wd14-tagger-standalone && \
-    ln -s /opt/wd14-venv/bin/wd14-tagger /usr/local/bin/wd14-tagger && \
+    ln -sf /opt/wd14-venv/bin/wd14-tagger /usr/local/bin/wd14-tagger && \
     rm -rf /tmp/wd14-tagger-standalone
 RUN if [ "$BAKE_WD14_ASSETS" = "1" ]; then /bin/sh /usr/local/bin/fetch-wd14-assets /opt/wd14-models/wd14-convnextv2.v1; fi
 
@@ -96,7 +96,7 @@ RUN sed -i 's/requires-python = ">=3.11"/requires-python = ">=3.10"/' /tmp/trans
     /opt/transnetv2-venv/bin/pip install --no-cache-dir future ffmpeg-python && \
     /opt/transnetv2-venv/bin/pip install --no-cache-dir --no-deps git+https://github.com/badde57/transnetv2pt.git@v1.0.0 && \
     /opt/transnetv2-venv/bin/pip install --no-cache-dir --no-deps /tmp/transnetv2-cli && \
-    ln -s /opt/transnetv2-venv/bin/transnetv2-cli /usr/local/bin/transnetv2-cli && \
+    ln -sf /opt/transnetv2-venv/bin/transnetv2-cli /usr/local/bin/transnetv2-cli && \
     rm -rf /tmp/transnetv2-cli
 
 RUN if [ "$WARM_MODELS" = "1" ]; then /usr/local/bin/warm-models; fi
