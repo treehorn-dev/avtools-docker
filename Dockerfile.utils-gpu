@@ -1,4 +1,4 @@
-ARG CUDA_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:gpu-latest
+ARG CUDA_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:gpu-3461a5d
 ARG JELLYFIN_FFMPEG_VERSION=7.1.3-6
 FROM ${CUDA_BASE_IMAGE}
 

@@ -261,7 +261,7 @@ steps:
         - gpu-latest
         - gpu-${CI_COMMIT_SHA:0:7}
       build_args:
-        - CUDA_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:gpu-latest
+        - CUDA_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:gpu-3461a5d
         - OCI_REVISION=${CI_COMMIT_SHA:0:7}
         - OCI_CREATED=${CI_PIPELINE_CREATED}
         - BAKE_WD14_ASSETS=0

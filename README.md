@@ -96,6 +96,8 @@ Woodpecker publishes these GHCR package families:
 - `ghcr.io/treehorn-dev/avtools-utils:cpu-warm-latest`
 - `ghcr.io/treehorn-dev/avtools-utils:gpu`
 - `ghcr.io/treehorn-dev/avtools-utils:gpu-latest`
+
+GPU builds are currently anchored to the known-good immutable bootstrap `ghcr.io/treehorn-dev/avtools-utils:gpu-3461a5d` rather than recursively layering on `gpu-latest`. This avoids unbounded ancestry depth, which Synology Docker started rejecting with `failed to register layer: max depth exceeded`.
 - `ghcr.io/treehorn-dev/avtools-assets:gpu`
 - `ghcr.io/treehorn-dev/avtools-assets:gpu-latest`
 - `ghcr.io/treehorn-dev/avtools-utils:gpu-warm`

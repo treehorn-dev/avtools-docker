@@ -172,7 +172,7 @@ def test_gpu_dockerfile_redeclares_jellyfin_version_after_from() -> None:
     text = Path('Dockerfile.utils-gpu').read_text()
     constraints = Path('requirements/utils-gpu-constraints.txt').read_text()
 
-    assert 'ARG CUDA_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:gpu-latest' in text
+    assert 'ARG CUDA_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:gpu-3461a5d' in text
     assert 'ARG JELLYFIN_FFMPEG_VERSION=7.1.3-6\nFROM ${CUDA_BASE_IMAGE}' in text
     assert 'FROM ${CUDA_BASE_IMAGE}\n\nARG DEBIAN_FRONTEND=noninteractive\nARG TARGETARCH=amd64\nARG JELLYFIN_FFMPEG_VERSION=7.1.3-6' in text
     assert 'ARG OCI_REVISION=unknown' in text
@@ -274,7 +274,7 @@ def test_woodpecker_builds_and_publishes_runtime_and_asset_variants() -> None:
     assert '- BAKE_WD14_ASSETS=1' in text
     assert '- FETCH_SIGLIP_ASSETS=1' in text
     assert '- FETCH_ALLIN1_ASSETS=1' in text
-    assert '- CUDA_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:gpu-latest' in text
+    assert '- CUDA_BASE_IMAGE=ghcr.io/treehorn-dev/avtools-utils:gpu-3461a5d' in text
     assert '- PYTHON_BASE_IMAGE=ghcr.io/treehorn-dev/ffmpeg-onnx:baked-${CI_COMMIT_SHA:0:7}' in text
     assert '- AVTOOLS_ASSETS_IMAGE=ghcr.io/treehorn-dev/avtools-assets:cpu-${CI_COMMIT_SHA:0:7}' in text
     assert '- AVTOOLS_ASSETS_IMAGE=ghcr.io/treehorn-dev/avtools-assets:gpu-${CI_COMMIT_SHA:0:7}' in text
